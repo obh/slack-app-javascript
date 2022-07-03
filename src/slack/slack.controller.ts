@@ -3,12 +3,14 @@ import { HTTPModuleFunctions, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
 import { IncomingMessage} from 'http';
+import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackOAuthService } from './slack-oauth.service';
 
 @Controller()
 export class SlackController {
   
-  constructor(private slackoauthService: SlackOAuthService) { }
+  constructor(private slackoauthService: SlackOAuthService,
+    private merchantService: MerchantService) { }
 
   @Get("/thanks")
   getHello(): string {
@@ -29,7 +31,11 @@ export class SlackController {
   }
 
   @Get("/install")
-  install(@Req() req: Request, @Res() res: Response){
+  async install(@Req() req: Request, @Res() res: Response){    
+    const merchant = await this.merchantService.validateMerchant("random token");
+    if(merchant.isActive){
+
+    }
     this.slackoauthService.handleInstall(req, res)
   }
 

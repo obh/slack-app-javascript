@@ -74,6 +74,7 @@ export class SlackOAuthService {
     }
     
     public async handleInstall(req: Request, res: Response) {
+        
         await this.appRunner.handleInstallPath(req, res)
     }
 }
