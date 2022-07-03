@@ -37,5 +37,5 @@ model SlackAppInstallation {
     tokenType                       String    @default("bot") @map("token_type")
     installedAt                     DateTime  @default(now()) @map("installed_at")
     // This is an example custom property
-    merchantId                      Int
+    merchantId                      Int?
 }

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestMiddleware, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module,  NestModule } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { MerchantService } from './merchant.service';
 
@@ -6,7 +6,7 @@ import { MerchantService } from './merchant.service';
 @Module({
     imports: [ ],
     controllers: [],
-    providers: [PrismaService],
+    providers: [PrismaService, MerchantService],
     exports: [MerchantService]
   })
 

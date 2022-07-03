@@ -30,7 +30,6 @@ export class SlackOAuthService {
                 console.log("onStoreInstallation")
                 console.log("---> ", installation);
                 console.log("---> ", prismaInput);
-                prismaInput.memo = 'test';
             },
         });
         

@@ -49,24 +49,24 @@ export class SlackController {
     return "hello world!"
   }
 
-  // @Get("/oauth_redirect")
-  // async oauthRedirect(@Req() req: Request, @Res() res: Response){    
-  //   const merchant = await this.merchantService.validateMerchant("random token");
-  //   if(merchant.isActive){
+  @Get("/oauth_redirect")
+  async oauthRedirect(@Req() req: Request, @Res() res: Response){    
+    const merchant = await this.merchantService.validateMerchant("random token");
+    if(merchant.isActive){
 
-  //   }
-  //   this.slackoauthService.handleOauthRedirect(req, res)
-  //   console.log("response -->", res)
-  //   return "done"
-  // }
+    }
+    this.slackoauthService.handleOauthRedirect(req, res)
+    console.log("response -->", res)
+    return "done"
+  }
 
-  // @Get("/install")
-  // async install(@Req() req: Request, @Res() res: Response){    
-  //   const merchant = await this.merchantService.validateMerchant("random token");
-  //   if(merchant.isActive){
+  @Get("/install")
+  async install(@Req() req: Request, @Res() res: Response){    
+    const merchant = await this.merchantService.validateMerchant("random token");
+    if(merchant.isActive){
 
-  //   }
-  //   this.slackoauthService.handleInstall(req, res)
-  // }
+    }
+    this.slackoauthService.handleInstall(req, res)
+  }
   
 }
