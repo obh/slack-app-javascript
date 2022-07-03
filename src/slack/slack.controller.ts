@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Headers, Post, Req, Res } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { HTTPModuleFunctions, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
@@ -9,12 +10,30 @@ import { SlackOAuthService } from './slack-oauth.service';
 @Controller()
 export class SlackController {
   
-  constructor(private slackoauthService: SlackOAuthService,
-    private merchantService: MerchantService) { }
+  private prismaClient: PrismaClient
+
+  constructor(
+    private slackoauthService: SlackOAuthService,
+    private merchantService: MerchantService
+    ) { 
+      this.prismaClient = new PrismaClient({
+        log: [
+            {
+                emit: 'stdout',
+                level: 'query',
+            },
+        ],
+      })
+  }
 
   @Get("/thanks")
   getHello(): string {
     return "hello world"
+  }
+
+  @Get("/end")
+  getEnd(): string {
+    return "this is the end!"
   }
 
   @Post("/command")
@@ -30,14 +49,24 @@ export class SlackController {
     return "hello world!"
   }
 
-  @Get("/install")
-  async install(@Req() req: Request, @Res() res: Response){    
-    const merchant = await this.merchantService.validateMerchant("random token");
-    if(merchant.isActive){
+  // @Get("/oauth_redirect")
+  // async oauthRedirect(@Req() req: Request, @Res() res: Response){    
+  //   const merchant = await this.merchantService.validateMerchant("random token");
+  //   if(merchant.isActive){
 
-    }
-    this.slackoauthService.handleInstall(req, res)
-  }
+  //   }
+  //   this.slackoauthService.handleOauthRedirect(req, res)
+  //   console.log("response -->", res)
+  //   return "done"
+  // }
 
+  // @Get("/install")
+  // async install(@Req() req: Request, @Res() res: Response){    
+  //   const merchant = await this.merchantService.validateMerchant("random token");
+  //   if(merchant.isActive){
+
+  //   }
+  //   this.slackoauthService.handleInstall(req, res)
+  // }
   
 }

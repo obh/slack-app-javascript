@@ -48,16 +48,11 @@ export class SlackOAuthService {
                 callbackOptions: {
                     success: (installation, installOptions, req, res) => {
                         // Do custom success logic here
-                        res.writeHead(200, { 'Content-Type': 'text/plain',});
-                        res.write("success")
-                        res.end()
+                        res.setHeader("status", 200)                        
                     }, 
                     failure: (error, installOptions , req, res) => {
                         // Do custom failure logic here
-                        res.writeHead(200, { 'Content-Type': 'text/plain',});
-                        res.write("failure")
-                        res.end()
-                        
+                        res.setHeader("status", 400)                        
                     }
                 },
             },
@@ -73,8 +68,11 @@ export class SlackOAuthService {
         this.appRunner = runner;
     }
     
-    public async handleInstall(req: Request, res: Response) {
-        
+    public async handleInstall(req: Request, res: Response) {        
         await this.appRunner.handleInstallPath(req, res)
+    }
+    
+    public async handleOauthRedirect(req: Request, res: Response) {
+        await this.appRunner.handleCallback(req, res)
     }
 }

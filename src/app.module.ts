@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_PIPE, RouterModule } from '@nestjs/core';
-// import { AppController } from './app.controller';
-// import { AppService } from './app.service';
+import { MerchantModule } from './merchant/merchant.module';
 import { SlackModule } from './slack/slack.module';
 
 @Module({
   imports: [
     SlackModule,
+    MerchantModule,
     RouterModule.register([
       {
         path: 'slack',
