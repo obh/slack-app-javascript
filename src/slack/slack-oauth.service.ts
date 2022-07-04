@@ -10,10 +10,11 @@ import { Request, Response } from 'express';
 export class SlackOAuthService {
 
     private appRunner: AppRunner;
+    private prismaClient: PrismaClient;
     //private readonly slackConfig: Config;
 
     constructor(){
-        const prismaClient = new PrismaClient({
+        this.prismaClient = new PrismaClient({
             log: [
                 {
                     emit: 'stdout',
@@ -23,7 +24,7 @@ export class SlackOAuthService {
         });
         
         const installationStore = new PrismaInstallationStore({    
-            prismaTable: prismaClient.slackAppInstallation,
+            prismaTable: this.prismaClient.slackAppInstallation,
             historicalDataEnabled: false,
             clientId: process.env.SLACK_CLIENT_ID,
             onStoreInstallation: async ({ prismaInput, installation, idToUpdate }) => {
@@ -75,5 +76,14 @@ export class SlackOAuthService {
     
     public async handleOauthRedirect(req: Request, res: Response) {
         await this.appRunner.handleCallback(req, res)
+    }
+
+    public async getSlackInstallationForMerchant(merchantId: number){
+        const appInstalled = this.prismaClient.slackAppInstallation.findFirst({
+            where: {
+                merchantId: merchantId
+            }
+        });
+        
     }
 }
