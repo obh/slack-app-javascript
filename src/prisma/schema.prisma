@@ -12,7 +12,7 @@ model SlackAppInstallation {
 
     id                              Int       @id @default(autoincrement())
     clientId                        String?   @map("client_id")
-    appId                           String?   @map("app_id")
+    appId                           String?   @map("app_id") 
     enterpriseId                    String?   @map("enterprise_id")
     enterpriseName                  String?   @map("enterprise_name")
     enterpriseUrl                   String?   @map("enterprise_url")

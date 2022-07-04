@@ -26,10 +26,12 @@ export class SlackOAuthService {
             prismaTable: prismaClient.slackAppInstallation,
             historicalDataEnabled: false,
             clientId: process.env.SLACK_CLIENT_ID,
-            onStoreInstallation: async ({ prismaInput, installation }) => {
+            onStoreInstallation: async ({ prismaInput, installation, idToUpdate }) => {
                 console.log("onStoreInstallation")
                 console.log("---> ", installation);
                 console.log("---> ", prismaInput);
+                console.log("ID to update -->", idToUpdate)
+                installation.metadata = String(idToUpdate)
             },
         });
         
@@ -47,7 +49,7 @@ export class SlackOAuthService {
                 callbackOptions: {
                     success: (installation, installOptions, req, res) => {
                         // Do custom success logic here
-                        res.setHeader("status", 200)                        
+                        res.setHeader("update_id", parseInt(installation.metadata, 10))    
                     }, 
                     failure: (error, installOptions , req, res) => {
                         // Do custom failure logic here

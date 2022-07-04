@@ -52,11 +52,19 @@ export class SlackController {
   @Get("/oauth_redirect")
   async oauthRedirect(@Req() req: Request, @Res() res: Response){    
     const merchant = await this.merchantService.validateMerchant("random token");
-    if(merchant.isActive){
+    // if(merchant.isActive){
 
+    // }
+    await this.slackoauthService.handleOauthRedirect(req, res)
+    if(res.getHeader("update_id")){
+      const idToUpdate:number = res.getHeader("update_id") as number
+      await this.prismaClient.slackAppInstallation.findUnique({
+        where: {
+            id: idToUpdate
+        } 
+      })
     }
-    this.slackoauthService.handleOauthRedirect(req, res)
-    console.log("response -->", res)
+    console.log("response to update -->", res.getHeader("update_id"))
     return "done"
   }
 
