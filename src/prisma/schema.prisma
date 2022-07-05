@@ -36,6 +36,7 @@ model SlackAppInstallation {
     isEnterpriseInstall             Boolean   @default(false) @map("is_enterprise_install")
     tokenType                       String    @default("bot") @map("token_type")
     installedAt                     DateTime  @default(now()) @map("installed_at")
-    // This is an example custom property
-    merchantId                      Int?
+    // Following are custom columns for our use case
+    installationStatus              String    @default("INACTIVE") @map("installationStatus")
+    merchantId                      Int?      @map("merchantId")
 }

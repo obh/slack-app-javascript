@@ -1,12 +1,12 @@
 import { Body, Controller, Get, Headers, Post, Req, Res } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { HTTPModuleFunctions, SlashCommand } from '@slack/bolt';
-import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
 import { IncomingMessage} from 'http';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackOAuthService } from './slack-oauth.service';
+import { SlackInstallationStatus } from './utils/slack.utils';
 
 @Controller()
 export class SlackController {
@@ -61,7 +61,8 @@ export class SlackController {
           id: idToUpdate
         } , 
         data : {
-          merchantId: merchant.merchantId
+          merchantId: merchant.merchantId,
+          installationStatus: "ACTIVE"
         }
       })
     }

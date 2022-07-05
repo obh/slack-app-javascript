@@ -84,6 +84,6 @@ export class SlackOAuthService {
                 merchantId: merchantId
             }
         });
-        
     }
+
 }
