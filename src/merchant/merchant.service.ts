@@ -7,7 +7,7 @@ export class MerchantService {
     public validateMerchant(token: string): Merchant {
         //curl https://merchant.cashfree.com/api/merchant/v1/common/validate/token
         return {
-            merchantId: 17,
+            merchantId: 27,
             token: "blah",
             isActive: true
         }
