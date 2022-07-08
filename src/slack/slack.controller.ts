@@ -59,8 +59,18 @@ export class SlackController {
       throw new UnauthorizedError("Not authorized")
     }   
     res.setHeader("merchantId", merchant.merchantId)
-    const activeInstallation = this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
+    const activeInstallation = await this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
     await this.slackoauthService.handleOauthRedirect(req, res)    
+    if(activeInstallation) {
+      this.prismaClient.slackAppInstallation.update({
+        where: {
+          id: activeInstallation.id,
+        },
+        data: {
+          installationStatus: SlackInstallationStatus.DEACTIVATED,
+        }
+     })
+    }
   }
 
   @Get("/install")

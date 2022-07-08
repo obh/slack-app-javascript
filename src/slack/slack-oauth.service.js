@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AppRunner } from '@seratch_/bolt-http-runner';
-import { App, LogLevel, InstallURLOptions } from '@slack/bolt';
-import { Installation } from '@slack/oauth';
-import { prisma, PrismaClient } from "@prisma/client";
+import { App, LogLevel } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
-import { Request, Response } from 'express';
-import { MerchantService } from 'src/merchant/merchant.service';
-import { SlackAppInstallation } from '@prisma/client';
+import { SlackInstallationStatus } from './utils/slack.utils';
 
 const scopes = ['commands', 'chat:write', 'app_mentions:read']
 
@@ -60,32 +56,11 @@ export class SlackOAuthService {
                         return true
                     }
                 },
-                // stateStore: {
-                //     generateStateParam: async (installUrlOptions, date): Promise<string> =>  {
-                //         return ""
-                //     },
-                //     verifyStateParam:  async (date, state): Promise<InstallURLOptions> => {
-                //         let installOptions :InstallURLOptions = {
-                //             scopes: ['commands', 'chat:write', 'app_mentions:read'],
-                //         };
-                //         return installOptions
-                //     },
-                // },
+
                 callbackOptions: {
                     afterInstallation: async (installation, options, req, res) => {
-                        // interface MyInstallation extends Installation {
-                        //     merchantid: number,
-                        //     installationStatus: string
-                        // }
-                        // let t:MyInstallation = {
-                        //     "merchantid": 17,
-                        //     "installationStatus": "ACTIVE",
-                        //     ...installation
-                        // }
-                        // installation = t
-                        installation.enterpriseUrl = "https://myenterpriseurl.com"
                         installation["merchantId"] = res.getHeader("merchantId")
-                        installation["installationStatus"] = "ACTIVE"
+                        installation["installationStatus"] = SlackInstallationStatus.ACTIVE
                         console.log("my installation is --> ", installation)
                         return true
                     },
@@ -113,11 +88,7 @@ export class SlackOAuthService {
         this.appRunner = runner;
     }
     
-    async handleInstall(req, res) {        
-        let installUrlOptions = {
-            scopes: scopes,
-            metadata: "17"
-        }
+    async handleInstall(req, res) {                
         await this.appRunner.handleInstallPath(req, res)
     }
     
@@ -129,12 +100,9 @@ export class SlackOAuthService {
         const slackInstallation = this.prismaClient.slackAppInstallation.findFirst({
             where: {
                 merchantId: merchantId,
-                installationStatus: "ACTIVE"
+                installationStatus: SlackInstallationStatus.ACTIVE
             }
         });
         return slackInstallation
     }
-
-
-
 }

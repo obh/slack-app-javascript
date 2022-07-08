@@ -13,6 +13,6 @@ export function SlackInstallationToEntity(slackAppInstallation: SlackAppInstalla
 }
 
 export enum SlackInstallationStatus {
-    ACTIVE,
-    DEACTIVATED,
+    ACTIVE = 'ACTIVE',
+    DEACTIVATED = 'DEACTIVATED',
 }
