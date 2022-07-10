@@ -1,9 +1,11 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
 import { catchError, Observable } from "rxjs";
 
 export class EntityNotFoundError extends Error {}
 
 export class UnauthorizedError extends Error {}
+
+export class CommandNotFoundError extends Error {}
 
 @Injectable()
 export class NotFoundInterceptor implements NestInterceptor {
@@ -15,6 +17,8 @@ export class NotFoundInterceptor implements NestInterceptor {
           throw new NotFoundException(error.message);
         } else if(error instanceof UnauthorizedError) {
           throw new UnauthorizedException(error.message)
+        } else if (error instanceof CommandNotFoundError){
+          throw new UnprocessableEntityException(error.message)
         } else {
           throw error;
         }

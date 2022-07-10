@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { AppRunner } from '@seratch_/bolt-http-runner';
 import { App, LogLevel } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
-import { SlackInstallationStatus } from './utils/slack.utils';
+import { PrismaClient } from '@prisma/client';
+import { SlackInstallationStatus } from '../utils/slack.utils';
 
 const scopes = ['commands', 'chat:write', 'app_mentions:read']
 
@@ -96,7 +97,7 @@ export class SlackOAuthService {
         await this.appRunner.handleCallback(req, res)
     }
 
-     async getSlackInstallationForMerchant(merchantId){
+    async getSlackInstallationForMerchant(merchantId){
         const slackInstallation = this.prismaClient.slackAppInstallation.findFirst({
             where: {
                 merchantId: merchantId,

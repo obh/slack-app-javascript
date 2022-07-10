@@ -1,12 +1,12 @@
-import { Body, Controller, Get, Headers, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, RawBodyRequest, Req, Res } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { HTTPModuleFunctions, SlashCommand } from '@slack/bolt';
+import { BufferedIncomingMessage, HTTPModuleFunctions, isValidSlackRequest, SlashCommand } from '@slack/bolt';
+import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
-import { IncomingMessage} from 'http';
 import { UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
-import { SlackOAuthService } from './slack-oauth.service';
+import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
 
 @Controller()
@@ -39,16 +39,21 @@ export class SlackController {
   }
 
   @Post("/command")
-  handleCommand(@Headers() headers, @Body() request: IncomingMessage): string {
-
-    console.log("headers --> ", headers)
-    console.log("command --> ", request)
-    const isValidRequest = HTTPModuleFunctions.parseAndVerifyHTTPRequest({
-      enabled: true,
-      signingSecret: process.env.SLACK_SIGNING_SECRET!,
-    }, request)
-    console.log("is valid request --> ", isValidRequest)
-    return "hello world!"
+  async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
+    console.log("raw ---> ", req.rawBody)
+    const slackVerifOptions: SlackRequestVerificationOptions = {
+      signingSecret: process.env.SLACK_SIGNING_SECRET,
+      body: req.rawBody.toString(),
+      headers: {
+        'x-slack-signature': headers['x-slack-signature'],
+        'x-slack-request-timestamp': headers['x-slack-request-timestamp'],
+      }
+    }
+    const isReqValid = isValidSlackRequest(slackVerifOptions);
+    console.log("--> is req valid?--> ", isReqValid)
+    const slashCommand:SlashCommand = JSON.parse(req.body);
+    console.log("slash command --> ", slashCommand)
+    return "hello world! this is you"
   }
 
   @Get("/oauth_redirect")
