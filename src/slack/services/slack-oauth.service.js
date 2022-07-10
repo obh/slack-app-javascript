@@ -106,4 +106,14 @@ export class SlackOAuthService {
         });
         return slackInstallation
     }
+
+    async getSlackInstallationForAppId(appId){
+        const slackInstallation = this.prismaClient.slackAppInstallation.findFirst({
+            where: {
+                appId: appId,
+                installationStatus: SlackInstallationStatus.ACTIVE
+            }
+        });
+        return slackInstallation
+    }
 }

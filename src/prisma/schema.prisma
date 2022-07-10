@@ -1,68 +1,99 @@
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "sqlite"
-    url      = env("DATABASE_URL")
-}
-
-model SlackAppInstallation {
-    @@map("slack_app_installation")
-
-    id                              Int       @id @default(autoincrement())
-    clientId                        String?   @map("client_id")
-    appId                           String?   @map("app_id") 
-    enterpriseId                    String?   @map("enterprise_id")
-    enterpriseName                  String?   @map("enterprise_name")
-    enterpriseUrl                   String?   @map("enterprise_url")
-    teamId                          String?   @map("team_id")
-    teamName                        String?   @map("team_name")
-    botToken                        String?   @map("bot_token")
-    botId                           String?   @map("bot_id")
-    botUserId                       String?   @map("bot_user_id")
-    botScopes                       String?   @map("bot_scopes")
-    botRefreshToken                 String?   @map("bot_refresh_token")
-    botTokenExpiresAt               DateTime? @map("bot_token_expires_at")
-    userId                          String?   @map("user_id")
-    userToken                       String?   @map("user_token")
-    userScopes                      String?   @map("user_scopes")
-    userRefreshToken                String?   @map("user_refresh_token")
-    userTokenExpiresAt              DateTime? @map("user_token_expires_at")
-    incomingWebhookUrl              String?   @map("incoming_webhook_url")
-    incomingWebhookChannel          String?   @map("incoming_webhook_channel")
-    incomingWebhookChannelId        String?   @map("incoming_webhook_channel_id")
-    incomingWebhookConfigurationUrl String?   @map("incoming_webhook_configuration_url")
-    isEnterpriseInstall             Boolean   @default(false) @map("is_enterprise_install")
-    tokenType                       String    @default("bot") @map("token_type")
-    installedAt                     DateTime  @default(now()) @map("installed_at")
-    // Following are custom columns for our use case
-    installationStatus              String    @default("INACTIVE") @map("installationStatus")
-    merchantId                      Int?      @map("merchantId")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model SlackEventSubscription {
-    @@map("slack_event_subscription")
+  id             Int       @id @default(autoincrement())
+  app_id         String    @db.VarChar(32)
+  enterpriseId   String?   @map("enterprise_id") @db.VarChar(32)
+  enterpriseName String?   @map("enterprise_name") @db.VarChar(200)
+  teamId         String?   @map("team_id") @db.VarChar(32)
+  teamName       String?   @map("team_name") @db.VarChar(200)
+  channelId      String?   @map("channel_id") @db.VarChar(32)
+  channelName    String?   @map("channel_name") @db.VarChar(100)
+  userId         String    @map("user_id") @db.VarChar(32)
+  userName       String    @map("user_name") @db.VarChar(200)
+  command        String    @db.VarChar(50)
+  event          String    @db.VarChar(50)
+  text           String    @db.VarChar(200)
+  trigger_id     String?   @db.VarChar(200)
+  added_on       DateTime? @db.DateTime(0)
+  updated_on     DateTime? @db.DateTime(0)
+  event_status   String?   @db.VarChar(20)
+  owner_approval String?   @db.VarChar(20)
+  merchantId     Int?      @map("merchant_id")
 
-    id                              Int       @id @default(autoincrement())
-    api_app_id                      String?   @map("api_app_id") 
-    enterpriseId                    String?   @map("enterprise_id")
-    enterpriseName                  String?   @map("enterprise_name")
-    enterpriseUrl                   String?   @map("enterprise_url")
-    teamId                          String?   @map("team_id")
-    teamName                        String?   @map("team_name")
-    teamDomain                     String?   @map("team_domain")
-    channelId                      String?   @map("channel_id")
-    channelName                    String?   @map("channel_name")
-    userId                          String?   @map("user_id")
-    userName                       String?   @map("user_name")
-    command                         String?   @map("command")
-    text                            String?   @map("text")
-    triggerId                      String?   @map("trigger_id")
-    
-    addedOn                     DateTime  @default(now()) @map("added_on")
-    updatedOn                   DateTime  @default(now()) @map("updated_on")
-    eventStatus                 String    @default("INACTIVE") @map("eventStatus")
-    ownerApproval               String?    @map("merchantId")            
-    merchantId                      Int?      @map("merchantId")
+  @@index([app_id, event, teamId, userId], map: "slack_event_idx")
+  @@map("slack_event_subscriptions")
+}
+
+model SlackInstallation {
+  id                                 Int       @id @default(autoincrement())
+  client_id                          String    @db.VarChar(32)
+  app_id                             String    @db.VarChar(32)
+  enterprise_id                      String?   @db.VarChar(32)
+  enterprise_name                    String?   @db.VarChar(200)
+  enterprise_url                     String?   @db.VarChar(200)
+  team_id                            String?   @db.VarChar(32)
+  team_name                          String?   @db.VarChar(200)
+  bot_token                          String?   @db.VarChar(200)
+  bot_id                             String?   @db.VarChar(32)
+  bot_user_id                        String?   @db.VarChar(32)
+  bot_scopes                         String?   @db.VarChar(1000)
+  bot_refresh_token                  String?   @db.VarChar(200)
+  bot_token_expires_at               DateTime? @db.DateTime(0)
+  user_id                            String    @db.VarChar(32)
+  user_token                         String?   @db.VarChar(200)
+  user_scopes                        String?   @db.VarChar(1000)
+  user_refresh_token                 String?   @db.VarChar(200)
+  user_token_expires_at              DateTime? @db.DateTime(0)
+  incoming_webhook_url               String?   @db.VarChar(200)
+  incoming_webhook_channel           String?   @db.VarChar(200)
+  incoming_webhook_channel_id        String?   @db.VarChar(200)
+  incoming_webhook_configuration_url String?   @db.VarChar(200)
+  is_enterprise_install              Boolean
+  token_type                         String?   @db.VarChar(32)
+  installed_at                       DateTime  @db.DateTime(0)
+  merchant_id                        Int?
+  installation_status                String?   @db.VarChar(12)
+
+  @@index([client_id, enterprise_id, team_id, user_id, installed_at], map: "slack_installations_idx")
+  @@map("slack_installations")
+}
+
+model UserSlackInsatallation {
+  id                                 Int       @id @default(autoincrement())
+  client_id                          String    @db.VarChar(32)
+  app_id                             String    @db.VarChar(32)
+  enterprise_id                      String?   @db.VarChar(32)
+  enterprise_name                    String?   @db.VarChar(200)
+  enterprise_url                     String?   @db.VarChar(200)
+  team_id                            String?   @db.VarChar(32)
+  team_name                          String?   @db.VarChar(200)
+  bot_token                          String?   @db.VarChar(200)
+  bot_id                             String?   @db.VarChar(32)
+  bot_user_id                        String?   @db.VarChar(32)
+  bot_scopes                         String?   @db.VarChar(1000)
+  bot_refresh_token                  String?   @db.VarChar(200)
+  bot_token_expires_at               DateTime? @db.DateTime(0)
+  user_id                            String    @db.VarChar(32)
+  user_token                         String?   @db.VarChar(200)
+  user_scopes                        String?   @db.VarChar(1000)
+  user_refresh_token                 String?   @db.VarChar(200)
+  user_token_expires_at              DateTime? @db.DateTime(0)
+  incoming_webhook_url               String?   @db.VarChar(200)
+  incoming_webhook_channel           String?   @db.VarChar(200)
+  incoming_webhook_channel_id        String?   @db.VarChar(200)
+  incoming_webhook_configuration_url String?   @db.VarChar(200)
+  is_enterprise_install              Boolean
+  token_type                         String?   @db.VarChar(32)
+  installed_at                       DateTime  @db.DateTime(0)
+
+  @@index([client_id, enterprise_id, team_id, user_id, installed_at], map: "user_slack_installations_idx")
+  @@map("user_slack_installations")
 }

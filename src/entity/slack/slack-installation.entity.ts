@@ -1,4 +1,4 @@
-export interface SlackInstallation {
+export interface SlackInstallationDto {
     id: number;
     merchantId: number;
     appId: string;

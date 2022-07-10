@@ -52,7 +52,9 @@ export class SlackController {
     const isReqValid = isValidSlackRequest(slackVerifOptions);
     console.log("--> is req valid?--> ", isReqValid)
     const slashCommand:SlashCommand = JSON.parse(req.body);
+    const slackInstallation = this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
     console.log("slash command --> ", slashCommand)
+
     return "hello world! this is you"
   }
 
@@ -67,12 +69,12 @@ export class SlackController {
     const activeInstallation = await this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
     await this.slackoauthService.handleOauthRedirect(req, res)    
     if(activeInstallation) {
-      this.prismaClient.slackAppInstallation.update({
+      this.prismaClient.slackInstallation.update({
         where: {
           id: activeInstallation.id,
         },
         data: {
-          installationStatus: SlackInstallationStatus.DEACTIVATED,
+          installation_status: SlackInstallationStatus.DEACTIVATED,
         }
      })
     }
@@ -98,4 +100,5 @@ export class SlackController {
     }
     return undefined;
   }
+
 }

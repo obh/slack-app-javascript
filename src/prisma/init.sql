@@ -1,0 +1,60 @@
+create table slack_event_subscriptions (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `app_id` varchar(32) NOT NULL,
+    `enterprise_id` varchar(32) DEFAULT NULL,
+    `enterprise_name` varchar(200) DEFAULT NULL,
+    `team_id` varchar(32) DEFAULT NULL,
+    `team_name` varchar(200) DEFAULT NULL,
+    `channel_id` varchar(32) DEFAULT NULL,
+    `channel_name` varchar(100) DEFAULT NULL,
+    `user_id` varchar(32) NOT NULL,
+    `user_name` varchar(200) NOT NULL,
+    `command` varchar(50) NOT NULL,
+    `event` varchar(50) NOT NULL,
+    `text` varchar(200) NOT NULL,
+    `triggerId` varchar(200) NOT NULL,
+    `addedOn` datetime NOT NULL,
+    `updatedOn` datetime NOT NULL,
+    `eventStatus` varchar(50) NOT NULL,
+    `ownerApproval` varchar(50) NOT NULL,
+    `merchant_id` int DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `slack_event_idx` (`app_id`,`event`, `team_id`,`user_id`)
+)   
+
+CREATE TABLE `slack_installations` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `client_id` varchar(32) NOT NULL,
+  `app_id` varchar(32) NOT NULL,
+  `enterprise_id` varchar(32) DEFAULT NULL,
+  `enterprise_name` varchar(200) DEFAULT NULL,
+  `enterprise_url` varchar(200) DEFAULT NULL,
+  `team_id` varchar(32) DEFAULT NULL,
+  `team_name` varchar(200) DEFAULT NULL,
+  `bot_token` varchar(200) DEFAULT NULL,
+  `bot_id` varchar(32) DEFAULT NULL,
+  `bot_user_id` varchar(32) DEFAULT NULL,
+  `bot_scopes` varchar(1000) DEFAULT NULL,
+  `bot_refresh_token` varchar(200) DEFAULT NULL,
+  `bot_token_expires_at` datetime DEFAULT NULL,
+  `user_id` varchar(32) NOT NULL,
+  `user_token` varchar(200) DEFAULT NULL,
+  `user_scopes` varchar(1000) DEFAULT NULL,
+  `user_refresh_token` varchar(200) DEFAULT NULL,
+  `user_token_expires_at` datetime DEFAULT NULL,
+  `incoming_webhook_url` varchar(200) DEFAULT NULL,
+  `incoming_webhook_channel` varchar(200) DEFAULT NULL,
+  `incoming_webhook_channel_id` varchar(200) DEFAULT NULL,
+  `incoming_webhook_configuration_url` varchar(200) DEFAULT NULL,
+  `is_enterprise_install` tinyint(1) NOT NULL,
+  `token_type` varchar(32) DEFAULT NULL,
+  `installed_at` datetime NOT NULL,
+  `merchant_id` int DEFAULT NULL,
+  `installation_status` varchar(12) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `slack_installations_idx` (`client_id`,`enterprise_id`,`team_id`,`user_id`,`installed_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+-- npx prisma validate --schema=./src/prisma/schema.prisma
+-- npx prisma db pull --schema=./src/prisma/schema.prisma
+-- npx prisma generate --schema=./src/prisma/schema.prisma
