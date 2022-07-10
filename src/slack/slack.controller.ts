@@ -60,8 +60,8 @@ export class SlackController {
     const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
     //TODO - throw error slack installation doesn't exist (should never happen)
     console.log("slash command --> ", slashCommand)
-    await this.slackCmdService.handleCommand(slashCommand, slackInstallation)
-    return "hello world! this is you"
+    const resp = await this.slackCmdService.handleCommand(slashCommand, slackInstallation)
+    return resp
   }
 
   @Get("/oauth_redirect")
