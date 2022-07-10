@@ -26,6 +26,7 @@ export class SlackController {
             },
         ],
       })
+      console.log("prisma client --> ", this.prismaClient)
   }
 
   @Get("/thanks")
@@ -74,7 +75,7 @@ export class SlackController {
           id: activeInstallation.id,
         },
         data: {
-          installation_status: SlackInstallationStatus.DEACTIVATED,
+          installationStatus: SlackInstallationStatus.DEACTIVATED,
         }
      })
     }

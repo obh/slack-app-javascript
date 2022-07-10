@@ -99,11 +99,11 @@ export class SlackCommandService {
 
     private async handleEventSubscription(slackCmd: SlackCommand, slackInstallation: SlackInstallation){
         const existing = await this.fetchSubscription(slackCmd.event, slackCmd.slashCommand.api_app_id)
-        if(existing && existing.event_status == 'ACTIVE'){
+        if(existing && existing.eventStatus == 'ACTIVE'){
             return failedSubscription("There already exists an active subscription for this event!")
         } 
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(slackCmd.event, slackCmd.slashCommand)
-        eventSubscription["merchantId"] = slackInstallation.merchant_id;
+        eventSubscription["merchantId"] = slackInstallation.merchantId;
         if(!existing){
             this.prismaClient.slackEventSubscription.create({
                 data: eventSubscription
@@ -123,18 +123,18 @@ export class SlackCommandService {
         return await this.prismaClient.slackEventSubscription.findFirst({
             where: {
                 event: subscriptionEvent.id,
-                app_id: appId,
+                appId: appId,
             }
         });
     }
 
     private prepareSubscription(subscriptionEvent: SubscriptionEvent, slashCommand: SlashCommand){
         let installation = {
-            app_id: slashCommand.api_app_id,
-            enterprise_id: slashCommand.enterprise_id,
-            team_id: slashCommand.team_id,
-            channel_id: slashCommand.channel_id,
-            channel_name: slashCommand.channel_name,
+            appId: slashCommand.api_app_id,
+            enterpriseId: slashCommand.enterprise_id,
+            teamId: slashCommand.team_id,
+            channelId: slashCommand.channel_id,
+            channelName: slashCommand.channel_name,
             userId: slashCommand.user_id,
             userName: slashCommand.user_name,
             command: slashCommand.command,

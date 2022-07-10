@@ -3,11 +3,11 @@ import { SlackInstallationDto } from "src/entity/slack/slack-installation.entity
 
 export function SlackInstallationToEntity(slackAppInstallation: SlackInstallation): SlackInstallationDto {
     let slackEntity: SlackInstallationDto;
-    slackEntity.appId = slackAppInstallation.app_id;
-    slackEntity.botId = slackAppInstallation.bot_id;
+    slackEntity.appId = slackAppInstallation.appId;
+    slackEntity.botId = slackAppInstallation.botId;
     slackEntity.id = slackAppInstallation.id;
-    slackEntity.merchantId = slackAppInstallation.merchant_id;
-    slackEntity.installedOn = slackAppInstallation.installed_at;
+    slackEntity.merchantId = slackAppInstallation.merchantId;
+    slackEntity.installedOn = slackAppInstallation.installedAt;
     //slackEntity.status = slackAppInstallation.
     return slackEntity;
 }

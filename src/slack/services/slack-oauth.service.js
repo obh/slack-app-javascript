@@ -25,7 +25,7 @@ export class SlackOAuthService {
         });
         
         const installationStore = new PrismaInstallationStore({    
-            prismaTable: this.prismaClient.slackAppInstallation,
+            prismaTable: this.prismaClient.slackInstallation,
             historicalDataEnabled: false,
             clientId: process.env.SLACK_CLIENT_ID,
             onStoreInstallation: async ({ prismaInput, installation, idToUpdate }) => {
@@ -98,7 +98,7 @@ export class SlackOAuthService {
     }
 
     async getSlackInstallationForMerchant(merchantId){
-        const slackInstallation = this.prismaClient.slackAppInstallation.findFirst({
+        const slackInstallation = this.prismaClient.slackInstallation.findFirst({
             where: {
                 merchantId: merchantId,
                 installationStatus: SlackInstallationStatus.ACTIVE
@@ -108,7 +108,7 @@ export class SlackOAuthService {
     }
 
     async getSlackInstallationForAppId(appId){
-        const slackInstallation = this.prismaClient.slackAppInstallation.findFirst({
+        const slackInstallation = this.prismaClient.slackInstallation.findFirst({
             where: {
                 appId: appId,
                 installationStatus: SlackInstallationStatus.ACTIVE
