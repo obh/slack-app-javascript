@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import { UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
+import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
 
@@ -16,6 +17,7 @@ export class SlackController {
 
   constructor(
     private slackoauthService: SlackOAuthService,
+    private slackCmdService: SlackCommandService,
     private merchantService: MerchantService
     ) { 
       this.prismaClient = new PrismaClient({
@@ -26,7 +28,7 @@ export class SlackController {
             },
         ],
       })
-      console.log("prisma client --> ", this.prismaClient)
+      // console.log("prisma client --> ", this.prismaClient)
   }
 
   @Get("/thanks")
@@ -41,7 +43,6 @@ export class SlackController {
 
   @Post("/command")
   async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
-    console.log("raw ---> ", req.rawBody)
     const slackVerifOptions: SlackRequestVerificationOptions = {
       signingSecret: process.env.SLACK_SIGNING_SECRET,
       body: req.rawBody.toString(),
@@ -51,11 +52,15 @@ export class SlackController {
       }
     }
     const isReqValid = isValidSlackRequest(slackVerifOptions);
-    console.log("--> is req valid?--> ", isReqValid)
-    const slashCommand:SlashCommand = JSON.parse(req.body);
-    const slackInstallation = this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
+    if(!isReqValid){
+      throw new UnauthorizedError("Not authoriozed")
+    }
+    console.log("body is --> ", JSON.stringify(req.body))
+    const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
+    const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
+    //TODO - throw error slack installation doesn't exist (should never happen)
     console.log("slash command --> ", slashCommand)
-
+    await this.slackCmdService.handleCommand(slashCommand, slackInstallation)
     return "hello world! this is you"
   }
 
