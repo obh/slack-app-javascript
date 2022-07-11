@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Headers, Post, RawBodyRequest, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpStatus, Post, RawBodyRequest, Req, Res, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { BufferedIncomingMessage, HTTPModuleFunctions, isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
+import { IncomingMessage, ServerResponse } from 'http';
 import { UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
@@ -43,14 +44,7 @@ export class SlackController {
 
   @Post("/command")
   async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
-    const slackVerifOptions: SlackRequestVerificationOptions = {
-      signingSecret: process.env.SLACK_SIGNING_SECRET,
-      body: req.rawBody.toString(),
-      headers: {
-        'x-slack-signature': headers['x-slack-signature'],
-        'x-slack-request-timestamp': headers['x-slack-request-timestamp'],
-      }
-    }
+    const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
     if(!isReqValid){
       throw new UnauthorizedError("Not authoriozed")
@@ -96,6 +90,43 @@ export class SlackController {
     this.slackoauthService.handleInstall(req, res)
   }
 
+  @Post("/events")
+  async handleEvents(@Headers() headers, @Req() req: RawBodyRequest<Request>, @Res() res: Response) {
+    const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
+    const isReqValid = isValidSlackRequest(slackVerifOptions);
+    console.log("is valid --> ", isReqValid)
+    console.log(req.body)
+    const retObj = {
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": ":wave: Welcome to Cashfree Slack App!"
+          }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": ":white_check_mark: You can now subscribe to events"
+          }
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": ":white_check_mark: You can also get important data right on Slack!"
+          }
+        }
+      ]
+    }
+    this.slackoauthService.requestHandler("A03M59CUFU3", "D03M59RE1CK")
+  }
+
   private extractCookieValue(req, name) {
     const allCookies = req.headers.cookie;
     if (allCookies) {
@@ -107,4 +138,15 @@ export class SlackController {
     return undefined;
   }
 
+  private constructSlackVerificatonReq(body: string, @Headers() headers): SlackRequestVerificationOptions {
+    const slackVerifOptions: SlackRequestVerificationOptions = {
+      signingSecret: process.env.SLACK_SIGNING_SECRET,
+      body: body,
+      headers: {
+        'x-slack-signature': headers['x-slack-signature'],
+        'x-slack-request-timestamp': headers['x-slack-request-timestamp'],
+      }
+    }
+    return slackVerifOptions
+  }
 }

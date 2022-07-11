@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { AppRunner } from '@seratch_/bolt-http-runner';
-import { App, LogLevel } from '@slack/bolt';
+import { App, HTTPResponseAck, LogLevel, ReceiverEvent } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
 import { PrismaClient } from '@prisma/client';
 import { SlackInstallationStatus } from '../utils/slack.utils';
+const { WebClient, LogLevel } = require("@slack/web-api");
 
 const scopes = ['commands', 'chat:write', 'app_mentions:read']
 
@@ -11,6 +12,7 @@ const scopes = ['commands', 'chat:write', 'app_mentions:read']
 export class SlackOAuthService {
 
     appRunner;
+    app;
     prismaClient;
     //private readonly slackConfig: Config;
 
@@ -79,13 +81,13 @@ export class SlackOAuthService {
             },
             
         });
-        const app = new App(runner.appOptions());
+        this.app = new App(runner.appOptions());
         
-        app.event('app_mention', async ({ say }) => {
-            await say('Hi there!');
-        });
+        // app.event('app_home_opened', async ({ context, event, say }) => {            
+        //     await say('Hi there!');
+        // });
         
-        runner.setup(app);
+        runner.setup(this.app);
         this.appRunner = runner;
     }
     
@@ -96,6 +98,7 @@ export class SlackOAuthService {
      async handleOauthRedirect(req, res) {
         await this.appRunner.handleCallback(req, res)
     }
+
 
     async getSlackInstallationForMerchant(merchantId){
         const slackInstallation = this.prismaClient.slackInstallation.findFirst({
@@ -115,5 +118,22 @@ export class SlackOAuthService {
             }
         });
         return slackInstallation
+    }
+
+    async requestHandler(appId, channel) {
+       try {
+        let slackInstallation = await this.getSlackInstallationForAppId(appId)
+        console.log("slack install --> ", slackInstallation)
+        const client = new WebClient(slackInstallation.botToken, {
+            logLevel: LogLevel.DEBUG
+          });
+        const result = await client.views.publish({
+          channel: channel,
+          text: `Welcome to the team, <rohit>! 🎉 You can introduce yourself in this channel.`
+        });
+        console.log(result);
+      } catch (error) {
+        console.log(error)
+      }
     }
 }
