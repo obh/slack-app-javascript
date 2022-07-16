@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { APIAlertCommand } from "../interface/api-alert.command";
 
 @CommandHandler(APIAlertCommand)
-export class KillDragonHandler implements ICommandHandler<APIAlertCommand> {
+export class APIAlertCommandHandler implements ICommandHandler<APIAlertCommand> {
   constructor(
     // private readonly repository: HeroRepository,
     // private readonly publisher: EventPublisher,

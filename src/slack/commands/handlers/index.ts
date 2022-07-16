@@ -1,3 +1,3 @@
-import { APIAlertCommand } from "../interface/api-alert.command";
+import { APIAlertCommandHandler } from "./api-alert.handler";
 
-export const CommandHandlers = [APIAlertCommand];
+export const CommandHandlers = [APIAlertCommandHandler];
