@@ -84,6 +84,8 @@ export class SlackCommandService {
         if(!cmdFound){
             return [failedSubscription("Not a valid command!. Please try one of: "), null]
         }
+        //TODO FIX THIS
+        const parts = [123, "123"]
         console.log("command is -> ", cmdFound)
         if(cmdFound === CashfreeCommands.SUBSCRIBE || cmdFound === CashfreeCommands.UNSUBSCRIBE){
 
