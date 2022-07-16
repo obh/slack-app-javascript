@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Headers, HttpStatus, Post, RawBodyRequest, Req, Res, UnprocessableEntityException } from '@nestjs/common';
+import { Controller, Get, Headers, Post, RawBodyRequest, Req, Res } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { BufferedIncomingMessage, HTTPModuleFunctions, isValidSlackRequest, SlashCommand } from '@slack/bolt';
+import { isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
-import { IncomingMessage, ServerResponse } from 'http';
+import { CommandBus, EventBus } from '@nestjs/cqrs';
 import { UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
+import { APIErrorEvent } from './events/interface/api-error.event';
 
 @Controller()
 export class SlackController {
@@ -19,7 +20,9 @@ export class SlackController {
   constructor(
     private slackoauthService: SlackOAuthService,
     private slackCmdService: SlackCommandService,
-    private merchantService: MerchantService
+    private merchantService: MerchantService,
+    private readonly commandBus: CommandBus,
+    private readonly eventBus: EventBus,
     ) { 
       this.prismaClient = new PrismaClient({
         log: [
@@ -148,5 +151,11 @@ export class SlackController {
       }
     }
     return slackVerifOptions
+  }
+
+  @Get("/event")
+  async startEvent(){
+    await this.eventBus.publish(new APIErrorEvent(17, {}))
+    return "ok"
   }
 }

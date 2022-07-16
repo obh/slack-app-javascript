@@ -128,8 +128,19 @@ export class SlackOAuthService {
             logLevel: LogLevel.DEBUG
           });
         const result = await client.views.publish({
-          channel: channel,
-          text: `Welcome to the team, <rohit>! 🎉 You can introduce yourself in this channel.`
+          user_id: "U03MJ0MD01X",
+          view: {
+            "type": "home",
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Welcome home, <@{}> :house:* U03MJ0MD01X",
+                    },
+                },
+            ]    
+          }
         });
         console.log(result);
       } catch (error) {

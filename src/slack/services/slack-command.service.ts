@@ -4,6 +4,7 @@ import { SlackInstallation } from "@prisma/client";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
 import { failedSubscription, successfulSubscription } from "../templates/slack-subscribe";
+const yargs = require('yargs/yargs')
 
 const COMMAND = "/testcommand"
 
@@ -74,8 +75,8 @@ export class SlackCommandService {
         if(slashCommand.command != COMMAND){
             return [failedSubscription("command not found!"), null]
         }
-        const parts = slashCommand.text.split(" ")
-        const cmd = parts[0].toUpperCase()
+        const args = yargs(slashCommand.text).argv;
+        const cmd = args._[0].toUpperCase()
         console.log("command is --> ", cmd);
         // check first part
         const indexOfS = Object.values(CashfreeCommands).indexOf(cmd as unknown as CashfreeCommands);
@@ -107,7 +108,8 @@ export class SlackCommandService {
         if(existing && existing.eventStatus == 'ACTIVE'){
             return failedSubscription("There already exists an active subscription for this event!")
         } 
-        const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(slackCmd.event, slackCmd.slashCommand)
+        const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(
+            slackCmd.event, slackCmd.slashCommand)
         eventSubscription["merchantId"] = slackInstallation.merchantId;
         if(!existing){
             await this.prismaClient.slackEventSubscription.create({
