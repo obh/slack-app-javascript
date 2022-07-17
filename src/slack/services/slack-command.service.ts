@@ -3,49 +3,27 @@ import { SlackEventSubscription } from "@prisma/client";
 import { SlackInstallation } from "@prisma/client";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
-import { failedSubscription, successfulSubscription } from "../templates/slack-subscribe";
+import { parseSubscribeCommand, parseFetchCommand } from "../commands";
+import { ICommonCommand } from "../commands/common.command";
+import { failedSubscription, successfulSubscription, successfulUnsubscription } from "../templates/slack-subscribe.template";
 const yargs = require('yargs/yargs')
 
 const COMMAND = "/testcommand"
 
-export enum CashfreeCommands {
-    SUBSCRIBE = 'SUBSCRIBE',
-    UNSUBSCRIBE = 'UNSUBSCRIBE',
+const subscribeCmd = {
+    command: 'subscribe <event>',
+    desc: 'Subscribe to an event notifications.',
+}
+const unsubscribeCmd = {
+    command: 'unsubscribe <event>',
+    desc: 'Unsubscribe from event notifications.'
+}
+const fetchCmd = {
+    command: 'fetch <event>',
+    desc: 'Fetch data in realtime from Cashfree.'
 }
 
-export interface SlackCommand {
-    command: CashfreeCommands
-    event: SubscriptionEvent
-    slashCommand: SlashCommand
-}
 
-export interface SubscriptionEvent {
-    id: string
-    eventName: string
-    needsOwner: boolean
-    description: string
-}
-
-const SubscriptionEvents:Array<SubscriptionEvent> = [
-    {
-        id: "sr-drop",
-        eventName: "Personalized Success Rate Notifications",
-        needsOwner: true,
-        description: "Get notified whenever your success rate drops below a threshold."
-    }, 
-    {
-        id: "downtime",
-        eventName: "Payment Instrument Downtme",
-        needsOwner: false,
-        description: "Get notified whenever a bank or app is facing issues",
-    }, 
-    {
-        id: "pg-api-errors",
-        eventName: "API errors",
-        needsOwner: false,
-        description: "Get notified whenever an API call to Cashfree fails", 
-    }
-]
 
 @Injectable()
 export class SlackCommandService {
@@ -64,55 +42,61 @@ export class SlackCommandService {
     }
 
     public handleCommand(slashCommand: SlashCommand, slackInstallation: SlackInstallation){
-        const [errorMsg, slackCmd] = this.parseAndValidate(slashCommand)
-        if(errorMsg){
-            return errorMsg
-        }
-        return this.handleEventSubscription(slackCmd, slackInstallation)
+        const [cmd, command] = this.parseAndValidate(slashCommand)
+        let response ;
+        switch(cmd){
+            case 'subscribe':
+                response = this.handleEventSubscription(slashCommand, command)
+            case 'unsubsribe':
+                response = this.handleEventUnsubscription(slashCommand, command)
+            default:
+                break;
+       }
+       return response;
     }
 
-    private parseAndValidate(slashCommand: SlashCommand): [object, SlackCommand] {
-        if(slashCommand.command != COMMAND){
-            return [failedSubscription("command not found!"), null]
+    private parseAndValidate(slashCommand: SlashCommand): [string, ICommonCommand] {
+        const cmdArgs = yargs(slashCommand.text)
+            .command(subscribeCmd)
+            .command(unsubscribeCmd)
+            .command(fetchCmd)
+            .parse()
+        
+        if(cmdArgs._.length == 0){
+            throw new Error("Failed to parse this command: " + slashCommand.text)
         }
-        const args = yargs(slashCommand.text).argv;
-        const cmd = args._[0].toUpperCase()
-        console.log("command is --> ", cmd);
+        const cmd = cmdArgs._[0].toLowerCase()
+        const event = cmdArgs.event
         // check first part
-        const indexOfS = Object.values(CashfreeCommands).indexOf(cmd as unknown as CashfreeCommands);
-        const cmdFound:CashfreeCommands = Object.keys(CashfreeCommands)[indexOfS] as CashfreeCommands
-        if(!cmdFound){
-            return [failedSubscription("Not a valid command!. Please try one of: "), null]
+        let parsedCmd : boolean | ICommonCommand;
+        switch(cmd) {
+            case 'subscribe':            
+            case 'unsubscribe':
+                parsedCmd = parseSubscribeCommand(event)
+                break
+            case 'fetch':
+                parsedCmd = parseFetchCommand(event)
+                break
+            default: 
+                //log error here
+                throw new Error("Failed to find a matching command: " + cmd)
+        }       
+        if(!parsedCmd){
+            throw new Error("Failed to find a matching event: " + event)
         }
-        //TODO FIX THIS
-        const parts = [123, "123"]
-        console.log("command is -> ", cmdFound)
-        if(cmdFound === CashfreeCommands.SUBSCRIBE || cmdFound === CashfreeCommands.UNSUBSCRIBE){
-
-            console.log("last part --> ", parts)
-            const eventFound = SubscriptionEvents.find((event) => event.id == parts[1])
-            if(!eventFound){
-                return [failedSubscription("Not a valid event. Please view all valid commands here!"), null]    
-            }
-            const slackCmd:SlackCommand = {
-                command:  cmdFound,
-                event: eventFound,
-                slashCommand: slashCommand
-            }
-            return [null, slackCmd]
-        }
-        return [failedSubscription("Not a valid comand. Please view all valid commands here!"), null]
+        return [cmd, parsedCmd as ICommonCommand]
     }
 
-    private async handleEventSubscription(slackCmd: SlackCommand, slackInstallation: SlackInstallation){
-        const existing = await this.fetchSubscription(slackCmd.event, slackCmd.slashCommand.api_app_id)
+    //should we check for if slackinstallation already has some other subscription? 
+    private async handleEventSubscription(slackCmd: SlashCommand, command: ICommonCommand){
+        const existing = await this.fetchSubscription(command, slackCmd.slashCommand.api_app_id)
         console.log("existing subscription --> ", existing)
         if(existing && existing.eventStatus == 'ACTIVE'){
             return failedSubscription("There already exists an active subscription for this event!")
         } 
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(
-            slackCmd.event, slackCmd.slashCommand)
-        eventSubscription["merchantId"] = slackInstallation.merchantId;
+            command, slackCmd.slashCommand)
+        eventSubscription["merchantId"] = existing.merchantId;
         if(!existing){
             await this.prismaClient.slackEventSubscription.create({
                 data: eventSubscription
@@ -125,19 +109,35 @@ export class SlackCommandService {
                 data: eventSubscription
             })
         }
-        return successfulSubscription(slackCmd.event)
+        return successfulSubscription(command)
     }
 
-    private async fetchSubscription(subscriptionEvent: SubscriptionEvent, appId: string): Promise<SlackEventSubscription>{
+    private async handleEventUnsubscription(slackCmd: SlashCommand, command: ICommonCommand){
+        const existing = await this.fetchSubscription(command, slackCmd.slashCommand.api_app_id)
+        if(!existing){
+            //oops not found need to return something
+        }
+        await this.prismaClient.slackEventSubscription.update({
+            where: {
+                id: existing.id
+            },
+            data: {
+                eventStatus: 'UNSUBSCRIBED'
+            }
+        })
+        return successfulUnsubscription(command)
+    }
+
+    private async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{
         return await this.prismaClient.slackEventSubscription.findFirst({
             where: {
-                event: subscriptionEvent.id,
+                event: subscriptionEvent.eventId,
                 appId: appId,
             }
         });
     }
 
-    private prepareSubscription(subscriptionEvent: SubscriptionEvent, slashCommand: SlashCommand){
+    private prepareSubscription(subscriptionEvent: ICommonCommand, slashCommand: SlashCommand){
         let installation = {
             appId: slashCommand.api_app_id,
             enterpriseId: slashCommand.enterprise_id,
@@ -147,13 +147,12 @@ export class SlackCommandService {
             userId: slashCommand.user_id,
             userName: slashCommand.user_name,
             command: slashCommand.command,
-            event: subscriptionEvent.id,
+            event: subscriptionEvent.eventId,
             text: slashCommand.text,
             triggerId: slashCommand.trigger_id,
         };
         return installation
     }
 
-    // public subscribe()
 
 }

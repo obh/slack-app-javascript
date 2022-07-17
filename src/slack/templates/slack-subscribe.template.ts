@@ -1,4 +1,5 @@
-import { SubscriptionEvent } from "../services/slack-command.service";
+import { ICommonCommand } from "../commands/common.command"
+
 
 const SUBSCRIPTION_SUCCESS_TEMPLATE = {
 	"blocks": [
@@ -57,14 +58,14 @@ const SUBSCRIPTION_FAILED_TEMPLATE = {
 	]
 }
 
-export function successfulSubscription(event: SubscriptionEvent){
-    const item1 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[0].text.replace("{event_id}", event.id)
+export function successfulSubscription(cmd: ICommonCommand){
+    const item1 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[0].text.replace("{event_id}", cmd.eventId)
     SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[0].text = item1
 
-    const item2 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[1].text.replace("{event_name}", event.eventName)
+    const item2 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[1].text.replace("{event_name}", cmd.eventId)
     SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[2].fields[1].text = item2
 
-    const item3 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[3].text.text.replace("{event_description}", event.description)
+    const item3 = SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[3].text.text.replace("{event_description}", cmd.eventDescription)
     SUBSCRIPTION_SUCCESS_TEMPLATE.blocks[3].text.text = item3
 
     return SUBSCRIPTION_SUCCESS_TEMPLATE
@@ -74,4 +75,8 @@ export function failedSubscription(error_message){
     const newMessage =  SUBSCRIPTION_FAILED_TEMPLATE.blocks[2].text.text.replace("{error_message}", error_message)  
     SUBSCRIPTION_FAILED_TEMPLATE.blocks[2].text.text = newMessage;
     return SUBSCRIPTION_FAILED_TEMPLATE;
+}
+
+export function successfulUnsubscription(cmd: ICommonCommand){
+	return "You have successfull unsubscribed from this event"
 }

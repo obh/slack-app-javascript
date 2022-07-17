@@ -10,7 +10,6 @@ import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
-import { APIErrorEvent } from './events/interface/api-error.event';
 
 @Controller()
 export class SlackController {
@@ -50,7 +49,7 @@ export class SlackController {
     const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
     if(!isReqValid){
-      throw new UnauthorizedError("Not authoriozed")
+      throw new UnauthorizedError("Not authorized")
     }
     console.log("body is --> ", JSON.stringify(req.body))
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
@@ -155,7 +154,16 @@ export class SlackController {
 
   @Get("/event")
   async startEvent(){
-    await this.eventBus.publish(new APIErrorEvent(17, {}))
+    //await this.eventBus.publish(new APIErrorEvent(17, {}))
+    // const apiAlertCmd = AllCommands.filter( c => c.eventId == 'api-alert');
+    // console.log(apiAlertCmd); 
+    //const commandResp = await this.commandBus.execute(new APIAlertCommand(17, {}))
+    //return commandResp.data
+
+    // find slack installation for merchantId and do any other validation (which is common)
+    // CommandUtilService(fetch installation for merchantId)
+    // command.validate(slackInstallation)
+    // event.send(commandValidated(command, slackInstallation))
     return "ok"
   }
 }
