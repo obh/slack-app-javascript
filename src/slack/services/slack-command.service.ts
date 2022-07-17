@@ -3,6 +3,7 @@ import { SlackEventSubscription } from "@prisma/client";
 import { SlackInstallation } from "@prisma/client";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
+import { SlackError } from "src/common/interceptors/exception.interceptor";
 import { parseSubscribeCommand, parseFetchCommand } from "../commands";
 import { ICommonCommand } from "../commands/common.command";
 import { failedSubscription, successfulSubscription, successfulUnsubscription } from "../templates/slack-subscribe.template";
@@ -82,7 +83,7 @@ export class SlackCommandService {
                 throw new Error("Failed to find a matching command: " + cmd)
         }       
         if(!parsedCmd){
-            throw new Error("Failed to find a matching event: " + event)
+            throw new SlackError("Failed to find a matching event: " + event)
         }
         return [cmd, parsedCmd as ICommonCommand]
     }

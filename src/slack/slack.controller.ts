@@ -1,10 +1,10 @@
-import { Controller, Get, Headers, Post, RawBodyRequest, Req, Res } from '@nestjs/common';
+import { Controller, Get, Headers, HttpCode, Post, RawBodyRequest, Req, Res, UseFilters, UseInterceptors } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
 import { CommandBus, EventBus } from '@nestjs/cqrs';
-import { UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
+import { NotFoundInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from './services/slack-command.service';
@@ -45,18 +45,21 @@ export class SlackController {
   }
 
   @Post("/command")
+  @HttpCode(200)
+  @UseInterceptors(NotFoundInterceptor)
   async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
-    const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
-    const isReqValid = isValidSlackRequest(slackVerifOptions);
-    if(!isReqValid){
-      throw new UnauthorizedError("Not authorized")
-    }
+    // const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
+    // const isReqValid = isValidSlackRequest(slackVerifOptions);
+    // if(!isReqValid){
+    //   throw new UnauthorizedError("Not authorized")
+    // }
     console.log("body is --> ", JSON.stringify(req.body))
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
     const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
     //TODO - throw error slack installation doesn't exist (should never happen)
     console.log("slash command --> ", slashCommand)
     const resp = await this.slackCmdService.handleCommand(slashCommand, slackInstallation)
+    console.log("this is the response --> ", resp)
     return resp
   }
 

@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
-import { catchError, Observable } from "rxjs";
+import { catchError, Observable, of, throwError } from "rxjs";
 
 export class EntityNotFoundError extends Error {}
 
@@ -7,21 +7,22 @@ export class UnauthorizedError extends Error {}
 
 export class CommandNotFoundError extends Error {}
 
+// we don't want to throw errors to the Slack app. So we will wrap them up
+export class SlackError extends Error{}
+
 @Injectable()
 export class NotFoundInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): any {
     // next.handle() is an Observable of the controller's result value
     return next.handle()
       .pipe(catchError(error => {
-        if (error instanceof EntityNotFoundError) {
-          throw new NotFoundException(error.message);
-        } else if(error instanceof UnauthorizedError) {
-          throw new UnauthorizedException(error.message)
-        } else if (error instanceof CommandNotFoundError){
-          throw new UnprocessableEntityException(error.message)
+        console.log("error is here --> ", error)
+        if(error instanceof SlackError){
+          return of(error.message)
         } else {
-          throw error;
+          throwError(() => new Error(error))
         }
-      }));
+      }
+    ));
   }
 }
