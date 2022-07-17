@@ -48,11 +48,11 @@ export class SlackController {
   @HttpCode(200)
   @UseInterceptors(NotFoundInterceptor)
   async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
-    const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
-    const isReqValid = isValidSlackRequest(slackVerifOptions);
-    if(!isReqValid){
-      throw new UnauthorizedError("Not authorized")
-    }
+    // const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
+    // const isReqValid = isValidSlackRequest(slackVerifOptions);
+    // if(!isReqValid){
+    //   throw new UnauthorizedError("Not authorized")
+    // }
     console.log("body is --> ", JSON.stringify(req.body))
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
     const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)

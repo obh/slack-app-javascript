@@ -55,8 +55,10 @@ export class SlackCommandService {
         switch(cmd){
             case SUBSCRIBE:
                 response = this.handleEventSubscription(slashCommand, command)
+                break;
             case UNSUBSCRIBE:
                 response = this.handleEventUnsubscription(slashCommand, command)
+                break;
             default:
                 break;
        }
@@ -96,15 +98,23 @@ export class SlackCommandService {
     }
 
     //should we check for if slackinstallation already has some other subscription? 
-    private async handleEventSubscription(slackCmd: SlashCommand, command: ICommonCommand){
-        const existing = await this.fetchSubscription(command, slackCmd.slashCommand.api_app_id)
-        console.log("existing subscription --> ", existing)
+    private async handleEventSubscription(slashCmd: SlashCommand, command: ICommonCommand){
+        const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
         if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
             return failedSubscription("There already exists an active subscription for this event!")
-        } 
-        const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(
-            command, slackCmd.slashCommand)
-        eventSubscription["merchantId"] = existing.merchantId;
+        }
+        const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
+        let merchantId = 0
+        if(!existing){
+            const slackInstall = await this.fetchInstallation(slashCmd.api_app_id)
+            merchantId = slackInstall ? slackInstall.merchantId : merchantId
+        } else {
+            merchantId = existing ? existing.merchantId : merchantId
+        }
+        if(merchantId == 0){
+            throw new SlackError("Found error when subscribing to event!")
+        }
+        eventSubscription.merchantId = merchantId        
         if(!existing){
             await this.prismaClient.slackEventSubscription.create({
                 data: eventSubscription
@@ -120,8 +130,8 @@ export class SlackCommandService {
         return successfulSubscription(command)
     }
 
-    private async handleEventUnsubscription(slackCmd: SlashCommand, command: ICommonCommand){
-        const existing = await this.fetchSubscription(command, slackCmd.slashCommand.api_app_id)
+    private async handleEventUnsubscription(slashCmd: SlashCommand, command: ICommonCommand){
+        const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
         if(!existing){
             //oops not found need to return something
         }
@@ -141,6 +151,14 @@ export class SlackCommandService {
             where: {
                 event: subscriptionEvent.eventId,
                 appId: appId,
+            }
+        });
+    }
+
+    private async fetchInstallation(appId: string): Promise<SlackInstallation>{
+        return await this.prismaClient.slackInstallation.findFirst({
+            where: {
+                appId: appId
             }
         });
     }
