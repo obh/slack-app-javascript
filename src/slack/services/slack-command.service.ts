@@ -10,6 +10,13 @@ import { failedSubscription, successfulSubscription, successfulUnsubscription } 
 const yargs = require('yargs/yargs')
 
 const COMMAND = "/testcommand"
+const SUBSCRIBE = 'subscribe'
+const UNSUBSCRIBE = 'unsubscribe'
+
+const enum SlackSubscriptionStatus {
+    ACTIVE = "active",
+    DISABLED = "disabled"
+}
 
 const subscribeCmd = {
     command: 'subscribe <event>',
@@ -46,9 +53,9 @@ export class SlackCommandService {
         const [cmd, command] = this.parseAndValidate(slashCommand)
         let response ;
         switch(cmd){
-            case 'subscribe':
+            case SUBSCRIBE:
                 response = this.handleEventSubscription(slashCommand, command)
-            case 'unsubsribe':
+            case UNSUBSCRIBE:
                 response = this.handleEventUnsubscription(slashCommand, command)
             default:
                 break;
@@ -64,15 +71,15 @@ export class SlackCommandService {
             .parse()
         
         if(cmdArgs._.length == 0){
-            throw new Error("Failed to parse this command: " + slashCommand.text)
+            throw new SlackError("Oops! Failed to parse this command: " + slashCommand.text)
         }
         const cmd = cmdArgs._[0].toLowerCase()
         const event = cmdArgs.event
         // check first part
         let parsedCmd : boolean | ICommonCommand;
         switch(cmd) {
-            case 'subscribe':            
-            case 'unsubscribe':
+            case SUBSCRIBE:            
+            case UNSUBSCRIBE:
                 parsedCmd = parseSubscribeCommand(event)
                 break
             case 'fetch':
@@ -80,10 +87,10 @@ export class SlackCommandService {
                 break
             default: 
                 //log error here
-                throw new Error("Failed to find a matching command: " + cmd)
+                throw new SlackError("Oops! Failed to find a matching command: " + cmd)
         }       
         if(!parsedCmd){
-            throw new SlackError("Failed to find a matching event: " + event)
+            throw new SlackError("Oops! Failed to find a matching event: " + event)
         }
         return [cmd, parsedCmd as ICommonCommand]
     }
@@ -92,7 +99,7 @@ export class SlackCommandService {
     private async handleEventSubscription(slackCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.fetchSubscription(command, slackCmd.slashCommand.api_app_id)
         console.log("existing subscription --> ", existing)
-        if(existing && existing.eventStatus == 'ACTIVE'){
+        if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
             return failedSubscription("There already exists an active subscription for this event!")
         } 
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(
@@ -123,7 +130,7 @@ export class SlackCommandService {
                 id: existing.id
             },
             data: {
-                eventStatus: 'UNSUBSCRIBED'
+                eventStatus: SlackSubscriptionStatus.DISABLED
             }
         })
         return successfulUnsubscription(command)
@@ -149,6 +156,7 @@ export class SlackCommandService {
             userName: slashCommand.user_name,
             command: slashCommand.command,
             event: subscriptionEvent.eventId,
+            eventStatus: SlackSubscriptionStatus.ACTIVE,
             text: slashCommand.text,
             triggerId: slashCommand.trigger_id,
         };
