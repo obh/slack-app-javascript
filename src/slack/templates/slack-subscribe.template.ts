@@ -76,7 +76,3 @@ export function failedSubscription(error_message){
     SUBSCRIPTION_FAILED_TEMPLATE.blocks[2].text.text = newMessage;
     return SUBSCRIPTION_FAILED_TEMPLATE;
 }
-
-export function successfulUnsubscription(cmd: ICommonCommand){
-	return "You have successfull unsubscribed from this event"
-}

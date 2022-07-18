@@ -6,7 +6,8 @@ import { SlashCommand } from "@slack/bolt";
 import { SlackError } from "src/common/interceptors/exception.interceptor";
 import { parseSubscribeCommand, parseFetchCommand } from "../commands";
 import { ICommonCommand } from "../commands/common.command";
-import { failedSubscription, successfulSubscription, successfulUnsubscription } from "../templates/slack-subscribe.template";
+import { failedSubscription, successfulSubscription} from "../templates/slack-subscribe.template";
+import { failedUnSubscription, successfulUnSubscription } from "../templates/slack-unsubscribe.template";
 const yargs = require('yargs/yargs')
 
 const COMMAND = "/testcommand"
@@ -133,7 +134,7 @@ export class SlackCommandService {
     private async handleEventUnsubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
         if(!existing){
-            //oops not found need to return something
+            failedUnSubscription("No active subscription was found for this event.")
         }
         await this.prismaClient.slackEventSubscription.update({
             where: {
@@ -143,7 +144,7 @@ export class SlackCommandService {
                 eventStatus: SlackSubscriptionStatus.DISABLED
             }
         })
-        return successfulUnsubscription(command)
+        return successfulUnSubscription(command)
     }
 
     private async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{
