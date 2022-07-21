@@ -1,29 +1,27 @@
 import { APIAlertCommand } from "./api-alert.command";
-import { ICommonCommand } from "./common.command";
+import { ICommandControlPanel, ICommonCommand } from "./common.command";
 
 //This is just interface to save all commands
 
-export const CommandList:ICommonCommand[] = [new APIAlertCommand]
+export const commandList = ICommandControlPanel.GetImplementations();
 
-export function parseSubscribeCommand(command: string): boolean | ICommonCommand{
-    const cmdFound = CommandList.filter(c => (c.eventId === command && c.canSubscribe))
-    if(!cmdFound){
-        return false;
+export function parseSubscribeCommand(command: string): ICommonCommand {
+    for(let i = 0; i < commandList.length; i++){
+        let c = new commandList[i]();
+        if(c.canSubscribe() && c.eventId == command){
+            return c
+        }
     }
-    if(cmdFound.length > 1){
-        throw new Error("duplicate commands found. Stopping here!")
-    }
-    return cmdFound[0];
+    return null;
 }
 
 //TODO complete this
-export function parseFetchCommand(command: string): boolean | ICommonCommand{
-    const cmdFound = CommandList.filter(c => c.eventId === command && c.canFetch)
-    if(!cmdFound){
-        return false;
+export function parseFetchCommand(command: string): ICommonCommand {
+    for(let i = 0; i < commandList.length; i++){
+        let c = new commandList[i]();
+        if(c.canFetch() && c.eventId == command){
+            return c
+        }
     }
-    if(cmdFound.length > 1){
-        throw new Error("duplicate commands found. Stopping here!")
-    }
-    return cmdFound[0];
+    return null;
 }

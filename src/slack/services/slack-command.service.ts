@@ -8,11 +8,15 @@ import { parseSubscribeCommand, parseFetchCommand } from "../commands";
 import { ICommonCommand } from "../commands/common.command";
 import { failedSubscription, successfulSubscription} from "../templates/slack-subscribe.template";
 import { failedUnSubscription, successfulUnSubscription } from "../templates/slack-unsubscribe.template";
+import { fetchCmdSuccessful } from "../templates/slack-fetch.template";
+import { FetchDataEvent, SEvent } from "../events/interface/fetch-data.event";
+
 const yargs = require('yargs/yargs')
 
 const COMMAND = "/testcommand"
 const SUBSCRIBE = 'subscribe'
 const UNSUBSCRIBE = 'unsubscribe'
+const FETCH = 'fetch'
 
 const enum SlackSubscriptionStatus {
     ACTIVE = "active",
@@ -50,20 +54,24 @@ export class SlackCommandService {
         });
     }
 
-    public handleCommand(slashCommand: SlashCommand, slackInstallation: SlackInstallation){
+    public async handleCommand(slashCommand: SlashCommand): Promise<[SEvent, object]> {
         const [cmd, command] = this.parseAndValidate(slashCommand)
-        let response ;
+        let response;
+        let eventNotif;
         switch(cmd){
             case SUBSCRIBE:
-                response = this.handleEventSubscription(slashCommand, command)
+                [eventNotif, response] = await this.handleEventSubscription(slashCommand, command)
                 break;
             case UNSUBSCRIBE:
-                response = this.handleEventUnsubscription(slashCommand, command)
+                [eventNotif, response] = await this.handleEventUnsubscription(slashCommand, command)
+                break;
+            case FETCH:
+                [eventNotif, response] = await this.handleFetchCommand(slashCommand, command)
                 break;
             default:
                 break;
        }
-       return response;
+       return [eventNotif, response];
     }
 
     private parseAndValidate(slashCommand: SlashCommand): [string, ICommonCommand] {
@@ -85,7 +93,7 @@ export class SlackCommandService {
             case UNSUBSCRIBE:
                 parsedCmd = parseSubscribeCommand(event)
                 break
-            case 'fetch':
+            case FETCH:
                 parsedCmd = parseFetchCommand(event)
                 break
             default: 
@@ -102,7 +110,7 @@ export class SlackCommandService {
     private async handleEventSubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
         if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
-            return failedSubscription("There already exists an active subscription for this event!")
+            return [null, failedSubscription("There already exists an active subscription for this event!")]
         }
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
         let merchantId = 0
@@ -128,13 +136,13 @@ export class SlackCommandService {
                 data: eventSubscription
             })
         }
-        return successfulSubscription(command)
+        return [null, successfulSubscription(command)]
     }
 
     private async handleEventUnsubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
         if(!existing){
-            failedUnSubscription("No active subscription was found for this event.")
+            return [false, failedUnSubscription("No active subscription was found for this event.")]
         }
         await this.prismaClient.slackEventSubscription.update({
             where: {
@@ -144,7 +152,12 @@ export class SlackCommandService {
                 eventStatus: SlackSubscriptionStatus.DISABLED
             }
         })
-        return successfulUnSubscription(command)
+        return [true, successfulUnSubscription(command)]
+    }
+
+    private async handleFetchCommand(slashCmd: SlashCommand, command: ICommonCommand){
+        //if we have come this far, we must go ahead as well
+        return [new FetchDataEvent(command.eventId), fetchCmdSuccessful(command)]
     }
 
     private async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{

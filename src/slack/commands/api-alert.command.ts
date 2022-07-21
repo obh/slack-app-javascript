@@ -1,14 +1,21 @@
 import { SlackInstallation } from "@prisma/client";
-import { ICommonCommand } from "./common.command";
+import { SlashCommand } from "@slack/bolt";
+import { ICommandControlPanel } from "./common.command";
 
-export class APIAlertCommand implements ICommonCommand {
+@ICommandControlPanel.register
+export class APIAlertCommand {
     
     readonly eventId = "api-alert"
     readonly eventDescription: string = "This event helps you fetch summary of API errors in Cashfree"
+    readonly slashCommand: SlashCommand;
+    readonly slackInstallation: SlackInstallation;
 
     //Command instance also needs to have the payload
 
-    constructor(){ }
+    constructor(slashCmd: SlashCommand, slackInstall: SlackInstallation){
+        this.slashCommand = slashCmd
+        this.slackInstallation = slackInstall
+     }
 
     canSubscribe(): boolean {
         return true;
@@ -21,4 +28,14 @@ export class APIAlertCommand implements ICommonCommand {
     validate(slackInstallation: SlackInstallation): boolean {
         return true;
     }
+
+    fetch(){
+        const merchantId = this.slackInstallation.merchantId;
+
+    }
+
+    private fetchAppId(){
+        
+    }
+
 }
