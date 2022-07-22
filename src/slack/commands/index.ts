@@ -1,4 +1,3 @@
-import { APIAlertCommand } from "./api-alert.command";
 import { ICommandControlPanel, ICommonCommand } from "./common.command";
 
 //This is just interface to save all commands

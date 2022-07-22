@@ -2,10 +2,16 @@ import { SlackInstallation } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
 
 export interface ICommonCommand {
+    // These are the static things which belong to the command
     readonly eventId: string;
     readonly eventDescription: string;
+
+    // The following are properties of the slack installation and the slack command
     readonly slashCommand: SlashCommand;
     readonly slackInstallation: SlackInstallation;
+
+    // The following is the property of the data which will be posted to slack
+    data: object;
 
     canSubscribe (): boolean;
     canFetch (): boolean;

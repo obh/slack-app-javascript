@@ -1,6 +1,7 @@
 import { SlackInstallation } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
 import { ICommandControlPanel } from "./common.command";
+let axios = require('axios');
 
 @ICommandControlPanel.register
 export class APIAlertCommand {
@@ -9,6 +10,7 @@ export class APIAlertCommand {
     readonly eventDescription: string = "This event helps you fetch summary of API errors in Cashfree"
     readonly slashCommand: SlashCommand;
     readonly slackInstallation: SlackInstallation;
+    data: object;
 
     //Command instance also needs to have the payload
 
@@ -29,13 +31,23 @@ export class APIAlertCommand {
         return true;
     }
 
-    fetch(){
-        const merchantId = this.slackInstallation.merchantId;
-
+    async fetchData(){
+        const data = await this.fetchRandomData();
+        this.data = data;
     }
 
-    private fetchAppId(){
-        
+    private async fetchRandomData(){
+        const url = "https://gorest.co.in/public/v2/users/13"
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+                "content-type": "application/json"
+            },
+        };
+        const response = await axios.get(url, requestOptions)
+        if(response.status == 200){
+            return response.json
+        }
     }
 
 }
