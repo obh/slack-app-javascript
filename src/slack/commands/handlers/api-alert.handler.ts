@@ -15,15 +15,7 @@ export class APIAlertCommandHandler implements ICommandHandler<APIAlertCommand> 
     await PostToSlack(command.data, command.slackInstallation.botToken, command.slashCommand.channel_id)    
     console.log("*****Command executed*****")
     return Promise.resolve("hello")
-
   }
 
-  async fetch(){
-    try {
-        const data = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
-        return data;
-      } catch(err) {
-        console.log("error: ", err);
-      }
-}
-}
+  
+} 

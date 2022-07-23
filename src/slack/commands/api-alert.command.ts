@@ -36,18 +36,13 @@ export class APIAlertCommand {
         this.data = data;
     }
 
-    private async fetchRandomData(){
-        const url = "https://gorest.co.in/public/v2/users/13"
-        const requestOptions = {
-            method: 'GET',
-            headers: {
-                "content-type": "application/json"
-            },
-        };
-        const response = await axios.get(url, requestOptions)
-        if(response.status == 200){
-            return response.json
-        }
-    }
+    async fetchRandomData(){
+        try {
+            const data = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
+            return data;
+          } catch(err) {
+            console.log("error: ", err);
+          }
+      }
 
 }

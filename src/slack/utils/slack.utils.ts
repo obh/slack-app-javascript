@@ -1,6 +1,6 @@
 import { SlackInstallation } from "@prisma/client" 
 import { SlackInstallationDto } from "src/entity/slack/slack-installation.entity";
-import { WebClient, LogLevel } from "@slack/web-api";
+import { WebClient, LogLevel, View } from "@slack/web-api";
 
 export function SlackInstallationToEntity(slackAppInstallation: SlackInstallation): SlackInstallationDto {
     let slackEntity: SlackInstallationDto;
@@ -32,4 +32,20 @@ export async function PostToSlack(message: object, botToken: string, channelId: 
       } catch (error) {
         console.log(error)
       }
+}
+
+export async function PostHomeViewToSlack(data: View, botToken: string, channelId: string){
+  console.log("Posting HomeView to slack channel: {}, data: {}", channelId, data)
+  try {
+      const client = new WebClient(botToken, {
+          logLevel: LogLevel.DEBUG
+        });
+      const result = await client.views.publish({
+        user_id: "U03MJ0MD01X",
+        view: data,
+      });
+      console.log(result);
+    } catch (error) {
+      console.log(error)
+    }
 }

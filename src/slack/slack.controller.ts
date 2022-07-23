@@ -10,6 +10,7 @@ import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
+import { FetchDataEvent } from './events/interface/fetch-data.event';
 
 @Controller()
 export class SlackController {
@@ -60,7 +61,9 @@ export class SlackController {
     console.log("slash command --> ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
-      this.eventBus.publish(event)
+      event.setSlackInstall(slackInstallation);
+      event.setSlashCommand(slashCommand);
+      this.eventBus.publish(event);
     }
     return resp
   }
@@ -102,36 +105,32 @@ export class SlackController {
     const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
     console.log("is valid --> ", isReqValid)
-    console.log(req.body)
-    const retObj = {
-      "blocks": [
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": ":wave: Welcome to Cashfree Slack App!"
-          }
-        },
-        {
-          "type": "divider"
-        },
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": ":white_check_mark: You can now subscribe to events"
-          }
-        },
-        {
-          "type": "section",
-          "text": {
-            "type": "mrkdwn",
-            "text": ":white_check_mark: You can also get important data right on Slack!"
-          }
-        }
-      ]
+    if(!isReqValid){ 
+      throw new UnauthorizedError("Not authorized")
     }
-    this.slackoauthService.requestHandler("A03M59CUFU3", "D03M59RE1CK")
+    //handle challenge
+    if(req.body.challenge){
+      console.log("handling challenge request")
+      return res.json({"challenge": req.body.challenge})
+    }
+    if(!req.body.event) {
+      throw new UnauthorizedError("Cannot find event body")
+    }
+    const eventType = req.body.event.type || req.body.type;
+    let response;
+    console.log("event type is -> ", eventType)
+    switch(eventType){
+      case "app_uninstalled":
+        this.slackoauthService.handleUninstall(req.body.api_app_id);
+        break;
+      case "app_home_opened":
+        response = this.slackoauthService.handleAppHomeOpen(req.body.api_app_id, req.body.event.channel);
+        break;
+      default:
+        break;
+    }
+    console.log(req.body)
+    //this.slackoauthService.requestHandler("A03M59CUFU3", "D03M59RE1CK")
   }
 
   private extractCookieValue(req, name) {

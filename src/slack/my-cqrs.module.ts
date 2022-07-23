@@ -35,6 +35,7 @@ export class MyCqrsModule implements OnModuleInit {
         await methodRef.call(execute, command);
       } catch (e) {
         console.error('yo');
+        console.log(e)
       }
     };
     instance.execute = newMethod;

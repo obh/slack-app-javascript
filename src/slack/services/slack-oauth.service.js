@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { AppRunner } from '@seratch_/bolt-http-runner';
-import { App, HTTPResponseAck, LogLevel, ReceiverEvent } from '@slack/bolt';
+import { App, LogLevel } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
 import { PrismaClient } from '@prisma/client';
-import { SlackInstallationStatus } from '../utils/slack.utils';
+import { PostHomeViewToSlack, PostToSlack, SlackInstallationStatus } from '../utils/slack.utils';
+import { homeTemplate } from '../templates/slack-home.template';
 const { WebClient, LogLevel } = require("@slack/web-api");
 
-const scopes = ['commands', 'chat:write', 'app_mentions:read']
+const scopes = ['channels:read', 'chat:write', 'commands', 'chat:write.customize']
 
 @Injectable()
 export class SlackOAuthService {
@@ -48,7 +49,7 @@ export class SlackOAuthService {
             signingSecret: process.env.SLACK_SIGNING_SECRET,
             clientId: process.env.SLACK_CLIENT_ID,
             clientSecret: process.env.SLACK_CLIENT_SECRET,
-            scopes: scopes,          
+            scopes: scopes, 
             installationStore: installationStore,          
             installerOptions: {
                 directInstall: true,
@@ -82,10 +83,6 @@ export class SlackOAuthService {
             
         });
         this.app = new App(runner.appOptions());
-        
-        // app.event('app_home_opened', async ({ context, event, say }) => {            
-        //     await say('Hi there!');
-        // });
         
         runner.setup(this.app);
         this.appRunner = runner;
@@ -146,5 +143,25 @@ export class SlackOAuthService {
       } catch (error) {
         console.log(error)
       }
+    }
+
+    async handleUninstall(appId){
+        let slackInstallation = await this.getSlackInstallationForAppId(appId)
+        if(slackInstallation.installationStatus == SlackInstallationStatus.ACTIVE){
+            const updatedInstallation = await this.prismaClient.slackInstallation.update({
+                where: {
+                    id: slackInstallation.id
+                },
+                data: {
+                    SlackInstallationStatus: SlackInstallationStatus.DEACTIVATED
+                }
+            })
+            console.log("Slack app uninstalled: {}", updatedInstallation.appId)
+        }    
+    }
+
+    async handleAppHomeOpen(appId, channelId){
+        let slackInstallation = await this.getSlackInstallationForAppId(appId)
+        PostHomeViewToSlack(homeTemplate, slackInstallation.botToken, channelId)
     }
 }
