@@ -4,6 +4,7 @@ import { isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
 import { CommandBus, EventBus } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import { NotFoundInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
@@ -15,6 +16,7 @@ import { FetchDataEvent } from './events/interface/fetch-data.event';
 @Controller()
 export class SlackController {
   
+  private readonly logger = new Logger(SlackController.name);
   private prismaClient: PrismaClient
 
   constructor(
@@ -54,11 +56,11 @@ export class SlackController {
     // if(!isReqValid){
     //   throw new UnauthorizedError("Not authorized")
     // }
-    console.log("body is --> ", JSON.stringify(req.body))
+    this.logger.log("body is --> ", JSON.stringify(req.body))
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
     const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
     //TODO - throw error slack installation doesn't exist (should never happen)
-    console.log("slash command --> ", slashCommand)
+    this.logger.log("slash command --> ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
       event.setSlackInstall(slackInstallation);
@@ -104,13 +106,13 @@ export class SlackController {
   async handleEvents(@Headers() headers, @Req() req: RawBodyRequest<Request>, @Res() res: Response) {
     const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
-    console.log("is valid --> ", isReqValid)
+    this.logger.log("is valid --> ", isReqValid)
     if(!isReqValid){ 
       throw new UnauthorizedError("Not authorized")
     }
     //handle challenge
     if(req.body.challenge){
-      console.log("handling challenge request")
+      this.logger.log("handling challenge request for events")
       return res.json({"challenge": req.body.challenge})
     }
     if(!req.body.event) {
@@ -118,7 +120,7 @@ export class SlackController {
     }
     const eventType = req.body.event.type || req.body.type;
     let response;
-    console.log("event type is -> ", eventType)
+    this.logger.log("event type is -> ", eventType)
     switch(eventType){
       case "app_uninstalled":
         this.slackoauthService.handleUninstall(req.body.api_app_id);
@@ -129,8 +131,7 @@ export class SlackController {
       default:
         break;
     }
-    console.log(req.body)
-    //this.slackoauthService.requestHandler("A03M59CUFU3", "D03M59RE1CK")
+    return response;
   }
 
   private extractCookieValue(req, name) {
