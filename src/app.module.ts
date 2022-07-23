@@ -3,9 +3,15 @@ import { RouterModule } from '@nestjs/core';
 import { MerchantModule } from './merchant/merchant.module';
 import { SlackModule } from './slack/slack.module';
 import { LoggerModule } from 'nestjs-pino';
+import { ServeStaticModule } from '@nestjs/serve-static'
+import { join } from 'path';
+
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),   
+    }),
     LoggerModule.forRoot(),
     SlackModule,
     MerchantModule,

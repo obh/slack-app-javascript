@@ -158,7 +158,7 @@ export class SlackOAuthService {
                     id: slackInstallation.id
                 },
                 data: {
-                    SlackInstallationStatus: SlackInstallationStatus.DEACTIVATED
+                    installationStatus: SlackInstallationStatus.DEACTIVATED
                 }
             })
             console.log("Slack app uninstalled: {}", updatedInstallation.appId)
