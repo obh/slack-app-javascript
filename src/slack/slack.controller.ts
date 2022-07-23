@@ -157,17 +157,10 @@ export class SlackController {
   }
 
   @Get("/event")
-  async startEvent(){
-    //await this.eventBus.publish(new APIErrorEvent(17, {}))
-    // const apiAlertCmd = AllCommands.filter( c => c.eventId == 'api-alert');
-    // console.log(apiAlertCmd); 
-    //const commandResp = await this.commandBus.execute(new APIAlertCommand(17, {}))
-    //return commandResp.data
-
-    // find slack installation for merchantId and do any other validation (which is common)
-    // CommandUtilService(fetch installation for merchantId)
-    // command.validate(slackInstallation)
-    // event.send(commandValidated(command, slackInstallation))
+  async startEvent(@Req() req){
+    const x = req.helx;
+    console.log("yolanda --> ", req.body.api_app_id);
+    this.slackoauthService.handleUninstall("req.body.api_app_id");
     return "ok"
   }
 }

@@ -35,17 +35,15 @@ export class SlackOAuthService {
                 console.log("onStoreInstallation")
                 prismaInput.merchantId = installation.merchantId
                 prismaInput.installationStatus = installation.installationStatus
-                // prismaInput["installationStatus"] = "ACTIVE"
                 console.log("---> ", installation);
                 console.log("---> ", prismaInput);
-                //console.log("ID to update -->", idToUpdate)
             },
         });
         
         const runner = new AppRunner({
             logLevel: LogLevel.DEBUG,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            stateSecret: "87bhuadsf12312bdsf!dfabdf1239134",
+            stateSecret: process.env.SLACK_STATE_SECRET,
             signingSecret: process.env.SLACK_SIGNING_SECRET,
             clientId: process.env.SLACK_CLIENT_ID,
             clientSecret: process.env.SLACK_CLIENT_SECRET,
@@ -96,8 +94,10 @@ export class SlackOAuthService {
         await this.appRunner.handleCallback(req, res)
     }
 
-
     async getSlackInstallationForMerchant(merchantId){
+        if(!merchantId){
+            return null
+        }
         const slackInstallation = this.prismaClient.slackInstallation.findFirst({
             where: {
                 merchantId: merchantId,
@@ -107,10 +107,14 @@ export class SlackOAuthService {
         return slackInstallation
     }
 
-    async getSlackInstallationForAppId(appId){
+    async getSlackInstallationForAppId(slackAppId){
+        if(!slackAppId){
+            return null
+        }
+        console.log("Searching for slack installation where appId: {} and status is ACTIVE", slackAppId)
         const slackInstallation = this.prismaClient.slackInstallation.findFirst({
             where: {
-                appId: appId,
+                appId: slackAppId,
                 installationStatus: SlackInstallationStatus.ACTIVE
             }
         });
@@ -147,7 +151,8 @@ export class SlackOAuthService {
 
     async handleUninstall(appId){
         let slackInstallation = await this.getSlackInstallationForAppId(appId)
-        if(slackInstallation.installationStatus == SlackInstallationStatus.ACTIVE){
+        console.log("slack installation found --> ", slackInstallation)
+        if(slackInstallation && slackInstallation.installationStatus == SlackInstallationStatus.ACTIVE){
             const updatedInstallation = await this.prismaClient.slackInstallation.update({
                 where: {
                     id: slackInstallation.id
