@@ -67,14 +67,10 @@ export class SlackOAuthService {
                         return true
                     },
                     success: (installation, installOptions, req, res) => {
-                        res.writeHead(200, {'Content-Type': 'text/plain'});
-                        res.write('Hello World!');
-                        res.end()
+                        res.redirect('../../success.html')
                     }, 
                     failure: (error, installOptions , req, res) => {
-                        res.writeHead(200, {'Content-Type': 'text/plain'});
-                        res.write('Installation failed!');
-                        res.end()
+                        res.redirect('../../failure.html')
                     }
                 },
             },
