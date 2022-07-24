@@ -1,6 +1,6 @@
 import { SlackInstallation } from "@prisma/client" 
 import { SlackInstallationDto } from "src/entity/slack/slack-installation.entity";
-import { WebClient, LogLevel, View } from "@slack/web-api";
+import { WebClient, LogLevel, View, Block } from "@slack/web-api";
 
 // export function SlackInstallationToEntity(slackAppInstallation: SlackInstallation): SlackInstallationDto {
 //     let slackEntity: SlackInstallationDto;
@@ -18,7 +18,7 @@ export enum SlackInstallationStatus {
     DEACTIVATED = 'DEACTIVATED',
 }
 
-export async function PostToSlack(message: object, botToken: string, channelId: string){
+export async function PostToSlack(message: Block[], botToken: string, channelId: string){
     console.log("Posting to slack channel: {}, data: {}", channelId, message)
     try {
         const client = new WebClient(botToken, {
@@ -26,7 +26,7 @@ export async function PostToSlack(message: object, botToken: string, channelId: 
           });
         const result = await client.chat.postMessage({
           channel: channelId,
-          view: message,
+          blocks: message,
         });
         console.log(result);
       } catch (error) {

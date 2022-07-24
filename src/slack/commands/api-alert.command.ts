@@ -1,6 +1,7 @@
 import { SlackInstallation } from "@prisma/client";
-import { SlashCommand } from "@slack/bolt";
+import { Block, SlashCommand } from "@slack/bolt";
 import { ICommandControlPanel } from "./common.command";
+import { plainToClass } from 'class-transformer';
 let axios = require('axios');
 
 @ICommandControlPanel.register
@@ -10,7 +11,7 @@ export class APIAlertCommand {
     readonly eventDescription: string = "This event helps you fetch summary of API errors in Cashfree"
     readonly slashCommand: SlashCommand;
     readonly slackInstallation: SlackInstallation;
-    data: object;
+    data: APIAlertData;
 
     //Command instance also needs to have the payload
 
@@ -33,16 +34,112 @@ export class APIAlertCommand {
 
     async fetchData(){
         const data = await this.fetchRandomData();
-        this.data = data;
+        if(data instanceof APIAlertData){
+            this.data = data;
+        }
     }
 
     async fetchRandomData(){
         try {
-            const data = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
-            return data;
+            const response = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
+            if(response.status === 200){
+                return plainToClass(APIAlertData, response.data)
+            }
+            else {
+                return {"error": "Error fetching data"}
+            }
           } catch(err) {
             console.log("error: ", err);
           }
       }
 
 }
+
+// This is just dummy data for now
+class APIAlertData {
+    id: Number;
+    uid: string;
+    valid_card: string;
+    token: string;
+    invalid_card: string;
+    month: string;
+    year: string;
+    cvv: string;
+    cvv_amex: string;
+
+    toSlackBlock() {
+        return [
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*API Alert*"
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*ID:* " + this.id
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*UID:* " + this.uid
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*Valid Card:* " + this.valid_card
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*Token:* " + this.token
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*Invalid Card:* " + this.invalid_card
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*Month:* " + this.month
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*Year:* " + this.year
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*CVV:* " + this.cvv
+                }
+            },
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: "*CVV Amex:* " + this.cvv_amex
+                }
+            }
+        ]        
+    }
+}
+

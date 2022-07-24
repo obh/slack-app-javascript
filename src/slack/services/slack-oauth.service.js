@@ -42,7 +42,6 @@ export class SlackOAuthService {
         
         const runner = new AppRunner({
             logLevel: LogLevel.DEBUG,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             stateSecret: process.env.SLACK_STATE_SECRET,
             signingSecret: process.env.SLACK_SIGNING_SECRET,
             clientId: process.env.SLACK_CLIENT_ID,
@@ -159,6 +158,7 @@ export class SlackOAuthService {
             })
             console.log("Slack app uninstalled: {}", updatedInstallation.appId)
         }    
+        return {"status": "success"}
     }
 
     async handleAppHomeOpen(appId, channelId){

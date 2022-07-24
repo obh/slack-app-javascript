@@ -23,7 +23,6 @@ export class SlackController {
     private slackoauthService: SlackOAuthService,
     private slackCmdService: SlackCommandService,
     private merchantService: MerchantService,
-    private readonly commandBus: CommandBus,
     private readonly eventBus: EventBus,
     ) { 
       this.prismaClient = new PrismaClient({
@@ -103,6 +102,7 @@ export class SlackController {
   }
 
   @Post("/events")
+  @HttpCode(200)
   async handleEvents(@Headers() headers, @Req() req: RawBodyRequest<Request>, @Res() res: Response) {
     const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
@@ -123,7 +123,7 @@ export class SlackController {
     this.logger.log("event type is -> ", eventType)
     switch(eventType){
       case "app_uninstalled":
-        this.slackoauthService.handleUninstall(req.body.api_app_id);
+        response = this.slackoauthService.handleUninstall(req.body.api_app_id);
         break;
       case "app_home_opened":
         response = this.slackoauthService.handleAppHomeOpen(req.body.api_app_id, req.body.event.channel);
