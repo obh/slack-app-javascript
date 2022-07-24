@@ -1,9 +1,9 @@
-import { Controller, Get, Headers, HttpCode, Post, RawBodyRequest, Req, Res, UseFilters, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Headers, HttpCode, Post, RawBodyRequest, Req, Res, UseInterceptors } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
-import { CommandBus, EventBus } from '@nestjs/cqrs';
+import { EventBus } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
 import { NotFoundInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
@@ -11,7 +11,6 @@ import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
-import { FetchDataEvent } from './events/interface/fetch-data.event';
 
 @Controller()
 export class SlackController {
