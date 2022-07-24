@@ -1,36 +1,30 @@
 
 ## Description
-A Slack App built on the NestJS Framework. 
+A Slack App built on the [NestJS Framework](https://nestjs.com/) utilizing [Prisma](https://www.prisma.io/). 
+Prisma is used as the installation store and also for other functionality. 
 
-## Installation
-
+## Build
+Build the docker image
 ```bash
-$ npm install
+$ docker build -t slack-app .
 ```
 
 ## Running the app
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+$ docker run -p 3000:3000 --env-file .env -d slack-app
 ```
 
-## Test
+## Without Docker
 
 ```bash
-# unit tests
-$ npm run test
+# Build Prisma
+$ npx prisma generate --schema=prisma/schema.prisma
 
-# e2e tests
-$ npm run test:e2e
+# Build 
+$ npm run build
 
-# test coverage
-$ npm run test:cov
+# Start the server
+$ npm start
 ```
 
