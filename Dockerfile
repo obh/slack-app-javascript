@@ -10,7 +10,7 @@ RUN npm install
 
 COPY . .
 
-RUN npm run prisma:generate
+#RUN npm run prisma:generate
 
 RUN npm run build
 
@@ -22,4 +22,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["npm", "start:prod"]
+CMD ["npm", "run", "start:prod"]
