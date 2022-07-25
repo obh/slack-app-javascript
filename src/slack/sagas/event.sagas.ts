@@ -4,6 +4,7 @@ import { map, Observable } from "rxjs";
 import { APIAlertCommand } from "../commands/api-alert.command";
 import { ICommonCommand } from "../commands/common.command";
 import { FetchDataEvent } from "../events/interface/fetch-data.event";
+import { WebhookDataEvent } from "../events/interface/webhook-data.event";
 
 @Injectable()
 export class EventHandlerSaga {
@@ -16,9 +17,21 @@ export class EventHandlerSaga {
         map(event => {
           if(event.eventId == 'api-alert') {
             return new APIAlertCommand(event.slashCommand, event.slackInstall)
-          }
-          // return new APIAlertCommand(17, {})
+          }           
         }),
-      );
+      )
+  }
+
+  @Saga()
+  eventReceived2 = (events$: Observable<any>): Observable<ICommonCommand> => {
+    return events$
+      .pipe(
+        ofType(WebhookDataEvent),
+        map(event => {
+          if(event.eventId == 'api-alert') {
+            return new APIAlertCommand(event.slashCommand, event.slackInstall)
+          }           
+        }),
+      )
   }
 }
