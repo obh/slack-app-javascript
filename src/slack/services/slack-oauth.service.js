@@ -15,7 +15,6 @@ export class SlackOAuthService {
     appRunner;
     app;
     prismaClient;
-    //private readonly slackConfig: Config;
 
     constructor(){
         this.prismaClient = new PrismaClient({

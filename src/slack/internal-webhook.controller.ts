@@ -27,15 +27,15 @@ export class InternalWebhookController {
         })
     }
 
-    @Post("/api-alert")
-    async apiAlertWebhook(@Body() body: Request, @Res() res: Response) {
-        this.logger.log("body is --> ", JSON.stringify(body))
-        const event = await this.slackCmdService.handleApiAlert(body)
-        if(event){
-            this.eventBus.publish(event)
-        }
-        res.send("ok")
-    }
+    // @Post("/api-alert")
+    // async apiAlertWebhook(@Body() body: Request, @Res() res: Response) {
+    //     this.logger.log("body is --> ", JSON.stringify(body))
+    //     const event = await this.slackCmdService.handleApiAlert(body)
+    //     if(event){
+    //         this.eventBus.publish(event)
+    //     }
+    //     res.send("ok")
+    // }
     
-    }
+    // }
 }

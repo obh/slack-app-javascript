@@ -10,6 +10,7 @@ import { failedSubscription, successfulSubscription} from "../templates/slack-su
 import { failedUnSubscription, successfulUnSubscription } from "../templates/slack-unsubscribe.template";
 import { fetchCmdSuccessful } from "../templates/slack-fetch.template";
 import { FetchDataEvent, SEvent } from "../events/interface/fetch-data.event";
+import { SlackInstallationStatus } from "../utils/slack.utils";
 
 const yargs = require('yargs/yargs')
 
@@ -23,6 +24,7 @@ const enum SlackSubscriptionStatus {
     DISABLED = "disabled"
 }
 
+//This is just for the parsing logic which is used by yargs
 const subscribeCmd = {
     command: 'subscribe <event>',
     desc: 'Subscribe to an event notifications.',
@@ -115,7 +117,7 @@ export class SlackCommandService {
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
         let merchantId = 0
         if(!existing){
-            const slackInstall = await this.fetchInstallation(slashCmd.api_app_id)
+            const slackInstall = await this.fetchActiveInstallation(slashCmd.api_app_id)
             merchantId = slackInstall ? slackInstall.merchantId : merchantId
         } else {
             merchantId = existing ? existing.merchantId : merchantId
@@ -152,7 +154,7 @@ export class SlackCommandService {
                 eventStatus: SlackSubscriptionStatus.DISABLED
             }
         })
-        return [true, successfulUnSubscription(command)]
+        return [null, successfulUnSubscription(command)]
     }
 
     private async handleFetchCommand(slashCmd: SlashCommand, command: ICommonCommand){
@@ -160,22 +162,51 @@ export class SlackCommandService {
         return [new FetchDataEvent(command.eventId), fetchCmdSuccessful(command)]
     }
 
-    private async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{
+    public async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{
         return await this.prismaClient.slackEventSubscription.findFirst({
             where: {
-                event: subscriptionEvent.eventId,
-                appId: appId,
+                AND: [
+                    {event: subscriptionEvent.eventId},
+                    {appId: appId},
+                ]
             }
         });
     }
 
-    private async fetchInstallation(appId: string): Promise<SlackInstallation>{
+    public async fetchActiveInstallation(appId: string): Promise<SlackInstallation>{
         return await this.prismaClient.slackInstallation.findFirst({
             where: {
-                appId: appId
+                AND: [
+                    {appId: appId},
+                    {installationStatus: SlackInstallationStatus.ACTIVE}
+                ]
             }
         });
     }
+
+    public async fetchActiveInstallationforMerchant(merchantId: number): Promise<SlackInstallation>{
+        return await this.prismaClient.slackInstallation.findFirst({
+            where: {
+                AND: [
+                    {merchantId: merchantId},
+                    {installationStatus: SlackInstallationStatus.ACTIVE}
+                ]
+            }
+        });
+    }
+
+    public async fetchActiveSubscriptionForMerchant(merchantId: number, event: string): Promise<SlackEventSubscription>{
+        return await this.prismaClient.slackEventSubscription.findFirst({
+            where: {
+                AND: [
+                    {merchantId: merchantId},
+                    {eventStatus: SlackSubscriptionStatus.ACTIVE},
+                    {event: event}    
+                ]
+            }
+        });
+    }
+
 
     private prepareSubscription(subscriptionEvent: ICommonCommand, slashCommand: SlashCommand){
         let installation = {
