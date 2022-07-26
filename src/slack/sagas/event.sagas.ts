@@ -3,7 +3,7 @@ import { ICommand, ofType, Saga } from "@nestjs/cqrs";
 import { map, Observable } from "rxjs";
 import { APIAlertCommand } from "../commands/api-alert.command";
 import { ICommonCommand } from "../commands/common.command";
-import { FetchDataEvent } from "../events/interface/fetch-data.event";
+import { SendSlackEvent } from "../events/interface/send-slack.event";
 import { WebhookDataEvent } from "../events/interface/webhook-data.event";
 
 @Injectable()
@@ -13,11 +13,13 @@ export class EventHandlerSaga {
   eventReceived = (events$: Observable<any>): Observable<ICommonCommand> => {
     return events$
       .pipe(
-        ofType(FetchDataEvent),
+        ofType(SendSlackEvent),
         map(event => {
+          let command;
           if(event.eventId == 'api-alert') {
-            return new APIAlertCommand(event.slashCommand, event.slackInstall)
-          }           
+            command = new APIAlertCommand(event.slashCommand, event.slackInstall)            
+          }          
+          return command
         }),
       )
   }
@@ -29,7 +31,9 @@ export class EventHandlerSaga {
         ofType(WebhookDataEvent),
         map(event => {
           if(event.eventId == 'api-alert') {
-            return new APIAlertCommand(event.slashCommand, event.slackInstall)
+            const apiAlertCommand = new APIAlertCommand(event.slashCommand, event.slackInstall)
+            // apiAlertCommand.parseData(event.data)
+            return apiAlertCommand
           }           
         }),
       )

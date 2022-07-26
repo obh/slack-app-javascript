@@ -14,8 +14,13 @@ import { WebClient, LogLevel, View, Block } from "@slack/web-api";
 // }
 
 export enum SlackInstallationStatus {
-    ACTIVE = 'ACTIVE',
-    DEACTIVATED = 'DEACTIVATED',
+  ACTIVE = 'ACTIVE',
+  DEACTIVATED = 'DEACTIVATED',
+}
+
+export enum SlackSubscriptionStatus {
+  SUBSCRIBED = 'SUBSCRIBED',
+  UNSUBSCRIBED = 'UNSUBSCRIBED'
 }
 
 export async function PostToSlack(message: Block[], botToken: string, channelId: string){

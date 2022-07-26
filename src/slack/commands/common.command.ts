@@ -14,8 +14,8 @@ export interface ICommonCommand {
     data: object;
 
     canSubscribe (): boolean;
-    canFetch (): boolean;
-    validate (slackInstallation: SlackInstallation): boolean;    
+    canFetch (): boolean;    
+    fetchData(): any;
 }
 
 

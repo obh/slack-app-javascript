@@ -12,6 +12,7 @@ import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { SlackInstallationStatus } from './utils/slack.utils';
 
+
 @Controller()
 export class SlackController {
   
@@ -61,8 +62,8 @@ export class SlackController {
     this.logger.log("slash command --> ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
-      event.setSlackInstall(slackInstallation);
-      event.setSlashCommand(slashCommand);
+      event.setSlackInstall(slackInstallation);      
+      console.log("sending event......  ", event)
       this.eventBus.publish(event);
     }
     return resp

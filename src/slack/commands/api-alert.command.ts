@@ -28,32 +28,38 @@ export class APIAlertCommand {
         return true;
     }
 
-    validate(slackInstallation: SlackInstallation): boolean {
-        return true;
+    async parseData(_this: APIAlertCommand, data: any) {
+        const d = plainToClass(APIAlertData, data)
+        if(d instanceof APIAlertData) {
+            _this.data = d
+        }
+        return _this
     }
 
     async fetchData(){
-        const data = await this.fetchRandomData();
+        const data = await fetchRandomData();
+        console.log("Fetched data in fetchData: ", data instanceof APIAlertData)
         if(data instanceof APIAlertData){
+            console.log("setting data to correct value")
             this.data = data;
-        }
-    }
-
-    async fetchRandomData(){
-        try {
-            const response = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
-            if(response.status === 200){
-                return plainToClass(APIAlertData, response.data)
-            }
-            else {
-                return {"error": "Error fetching data"}
-            }
-          } catch(err) {
-            console.log("error: ", err);
-          }
-      }
+        }        
+    }    
 
 }
+
+const fetchRandomData = async() => {
+    try {
+        const response = await axios.get("https://random-data-api.com/api/stripe/random_stripe");
+        if(response.status === 200){
+            return plainToClass(APIAlertData, response.data)
+        }
+        else {
+            return {"error": "Error fetching data"}
+        }
+      } catch(err) {
+        console.log("error: ", err);
+      }
+  }
 
 // This is just dummy data for now
 class APIAlertData {

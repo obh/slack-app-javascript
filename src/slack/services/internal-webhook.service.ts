@@ -1,25 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { PrismaClient, Prisma } from "@prisma/client";
-import { SlackInstallationStatus } from "../utils/slack.utils";
-import { SlackCommandService } from "./slack-command.service";
+import { SlackPrismaService } from "./prisma.service";
 
 @Injectable()
 export class InternalWebhookService {
 
-    private prismaClient: PrismaClient;
-    @Inject(SlackCommandService)
-    private readonly slackCommandSvc: SlackCommandService;
+    @Inject(SlackPrismaService)
+    private readonly slackPrismaSvc: SlackPrismaService;
     
-    constructor(){
-        this.prismaClient = new PrismaClient({
-            log: [
-                {
-                    emit: 'stdout',
-                    level: 'query',
-                },
-            ],
-        });
-    }
+    constructor(){}
 
     /**
      * This is where we will prepare the API alert body and use it to publish the event.
@@ -31,8 +19,8 @@ export class InternalWebhookService {
         if(merchantId && merchantId > 0){
             throw new Error("merchantId is required for API alert webhook")
         }
-        const slackInstallation = this.slackCommandSvc.fetchActiveInstallationforMerchant(merchantId)
-        const eventSubscription = this.slackCommandSvc.fetchActiveSubscriptionForMerchant(merchantId, "api-alert")
+        const slackInstallation = this.slackPrismaSvc.fetchActiveInstallationforMerchant(merchantId)
+        const eventSubscription = this.slackPrismaSvc.fetchActiveSubscriptionForMerchant(merchantId, "api-alert")
         if(!slackInstallation || !eventSubscription){
             throw new Error("No active installation or subscription found for this merchant")
         }

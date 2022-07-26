@@ -1,6 +1,4 @@
-import { Injectable } from "@nestjs/common";
-import { SlackEventSubscription } from "@prisma/client";
-import { SlackInstallation } from "@prisma/client";
+import { Inject, Injectable } from "@nestjs/common";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
 import { SlackError } from "src/common/interceptors/exception.interceptor";
@@ -10,7 +8,7 @@ import { failedSubscription, successfulSubscription} from "../templates/slack-su
 import { failedUnSubscription, successfulUnSubscription } from "../templates/slack-unsubscribe.template";
 import { fetchCmdSuccessful } from "../templates/slack-fetch.template";
 import { FetchDataEvent, SEvent } from "../events/interface/fetch-data.event";
-import { SlackInstallationStatus } from "../utils/slack.utils";
+import { SlackPrismaService } from "./prisma.service";
 
 const yargs = require('yargs/yargs')
 
@@ -45,7 +43,10 @@ export class SlackCommandService {
     
     private prismaClient: PrismaClient;
     
-    constructor(){
+    @Inject(SlackPrismaService)
+    private slackPrismaSvc: SlackPrismaService;
+    
+    constructor(){        
         this.prismaClient = new PrismaClient({
             log: [
                 {
@@ -73,6 +74,8 @@ export class SlackCommandService {
             default:
                 break;
        }
+       eventNotif.setSlashCommand(slashCommand)
+       eventNotif.setCommand(command)
        return [eventNotif, response];
     }
 
@@ -110,14 +113,14 @@ export class SlackCommandService {
 
     //should we check for if slackinstallation already has some other subscription? 
     private async handleEventSubscription(slashCmd: SlashCommand, command: ICommonCommand){
-        const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
+        const existing = await this.slackPrismaSvc.fetchSubscription(command, slashCmd.api_app_id)
         if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
             return [null, failedSubscription("There already exists an active subscription for this event!")]
         }
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
         let merchantId = 0
         if(!existing){
-            const slackInstall = await this.fetchActiveInstallation(slashCmd.api_app_id)
+            const slackInstall = await this.slackPrismaSvc.fetchActiveInstallation(slashCmd.api_app_id)
             merchantId = slackInstall ? slackInstall.merchantId : merchantId
         } else {
             merchantId = existing ? existing.merchantId : merchantId
@@ -142,7 +145,7 @@ export class SlackCommandService {
     }
 
     private async handleEventUnsubscription(slashCmd: SlashCommand, command: ICommonCommand){
-        const existing = await this.fetchSubscription(command, slashCmd.api_app_id)
+        const existing = await this.slackPrismaSvc.fetchSubscription(command, slashCmd.api_app_id)
         if(!existing){
             return [false, failedUnSubscription("No active subscription was found for this event.")]
         }
@@ -162,52 +165,6 @@ export class SlackCommandService {
         return [new FetchDataEvent(command.eventId), fetchCmdSuccessful(command)]
     }
 
-    public async fetchSubscription(subscriptionEvent: ICommonCommand, appId: string): Promise<SlackEventSubscription>{
-        return await this.prismaClient.slackEventSubscription.findFirst({
-            where: {
-                AND: [
-                    {event: subscriptionEvent.eventId},
-                    {appId: appId},
-                ]
-            }
-        });
-    }
-
-    public async fetchActiveInstallation(appId: string): Promise<SlackInstallation>{
-        return await this.prismaClient.slackInstallation.findFirst({
-            where: {
-                AND: [
-                    {appId: appId},
-                    {installationStatus: SlackInstallationStatus.ACTIVE}
-                ]
-            }
-        });
-    }
-
-    public async fetchActiveInstallationforMerchant(merchantId: number): Promise<SlackInstallation>{
-        return await this.prismaClient.slackInstallation.findFirst({
-            where: {
-                AND: [
-                    {merchantId: merchantId},
-                    {installationStatus: SlackInstallationStatus.ACTIVE}
-                ]
-            }
-        });
-    }
-
-    public async fetchActiveSubscriptionForMerchant(merchantId: number, event: string): Promise<SlackEventSubscription>{
-        return await this.prismaClient.slackEventSubscription.findFirst({
-            where: {
-                AND: [
-                    {merchantId: merchantId},
-                    {eventStatus: SlackSubscriptionStatus.ACTIVE},
-                    {event: event}    
-                ]
-            }
-        });
-    }
-
-
     private prepareSubscription(subscriptionEvent: ICommonCommand, slashCommand: SlashCommand){
         let installation = {
             appId: slashCommand.api_app_id,
@@ -224,6 +181,10 @@ export class SlackCommandService {
             triggerId: slashCommand.trigger_id,
         };
         return installation
+    }
+
+    public randomMethod(){
+        console.log("RANDOM METHOD CALLED!!")
     }
 
 
