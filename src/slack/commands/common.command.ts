@@ -7,8 +7,8 @@ export interface ICommonCommand {
     readonly eventDescription: string;
 
     // The following are properties of the slack installation and the slack command
-    readonly slashCommand: SlashCommand;
-    readonly slackInstallation: SlackInstallation;
+    slashCommand: SlashCommand;
+    slackInstallation: SlackInstallation;
 
     // The following is the property of the data which will be posted to slack
     data: object;
@@ -16,6 +16,7 @@ export interface ICommonCommand {
     canSubscribe (): boolean;
     canFetch (): boolean;    
     fetchData(): any;
+    parseData(data: any): any;
 }
 
 

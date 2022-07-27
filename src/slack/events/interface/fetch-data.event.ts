@@ -3,8 +3,8 @@ import { SlackInstallation } from "@prisma/client";
 import { ICommonCommand } from "src/slack/commands/common.command";
 
 export class SEvent {
-  slackInstall: SlackInstallation;
-  slashCommand: SlashCommand;
+  // slackInstall: SlackInstallation;
+  // slashCommand: SlashCommand;
   eventId: string;
   command: ICommonCommand;
 
@@ -12,13 +12,13 @@ export class SEvent {
     this.eventId = eventId;
   }
 
-  setSlackInstall(slackInstall: SlackInstallation){
-    this.slackInstall = slackInstall;
-  }
+  // setSlackInstall(slackInstall: SlackInstallation){
+  //   this.slackInstall = slackInstall;
+  // }
 
-  setSlashCommand(slashCmd: SlashCommand){
-    this.slashCommand = slashCmd
-  }
+  // setSlashCommand(slashCmd: SlashCommand){
+  //   this.slashCommand = slashCmd
+  // }
 
   setCommand(command: ICommonCommand){
     this.command = command

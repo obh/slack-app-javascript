@@ -62,7 +62,8 @@ export class SlackController {
     this.logger.log("slash command --> ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
-      event.setSlackInstall(slackInstallation);      
+      event.command.slackInstallation = slackInstallation
+      event.command.slashCommand = slashCommand
       console.log("sending event......  ", event)
       this.eventBus.publish(event);
     }

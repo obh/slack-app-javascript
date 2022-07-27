@@ -17,25 +17,11 @@ export class EventHandlerSaga {
         map(event => {
           let command;
           if(event.eventId == 'api-alert') {
-            command = new APIAlertCommand(event.slashCommand, event.slackInstall)            
+            command = event.command
           }          
           return command
         }),
       )
   }
-
-  @Saga()
-  eventReceived2 = (events$: Observable<any>): Observable<ICommonCommand> => {
-    return events$
-      .pipe(
-        ofType(WebhookDataEvent),
-        map(event => {
-          if(event.eventId == 'api-alert') {
-            const apiAlertCommand = new APIAlertCommand(event.slashCommand, event.slackInstall)
-            // apiAlertCommand.parseData(event.data)
-            return apiAlertCommand
-          }           
-        }),
-      )
-  }
+  
 }

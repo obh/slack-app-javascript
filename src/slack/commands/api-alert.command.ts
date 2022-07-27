@@ -28,12 +28,11 @@ export class APIAlertCommand {
         return true;
     }
 
-    async parseData(_this: APIAlertCommand, data: any) {
+    async parseData(data: any) {
         const d = plainToClass(APIAlertData, data)
         if(d instanceof APIAlertData) {
-            _this.data = d
-        }
-        return _this
+            this.data = d
+        }        
     }
 
     async fetchData(){

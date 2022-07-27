@@ -74,7 +74,6 @@ export class SlackCommandService {
             default:
                 break;
        }
-       eventNotif.setSlashCommand(slashCommand)
        eventNotif.setCommand(command)
        return [eventNotif, response];
     }

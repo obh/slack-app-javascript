@@ -20,6 +20,9 @@ async function bootstrap() {
     console.log('Unhandled Rejection at:', reason || reason)
     //TODO: send the information to sentry.io    
   })
+  process.on('uncaughtException', (err) => {
+    console.log('Uncaught Exception thrown:', err)
+  })
   
   app.use(bodyParser.urlencoded({verify: rawBodyBuffer, extended: true }));
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
