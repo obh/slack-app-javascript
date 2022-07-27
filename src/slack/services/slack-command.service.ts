@@ -63,18 +63,21 @@ export class SlackCommandService {
         let eventNotif;
         switch(cmd){
             case SUBSCRIBE:
-                [eventNotif, response] = await this.handleEventSubscription(slashCommand, command)
+                response = await this.handleEventSubscription(slashCommand, command)
+                eventNotif = null;
                 break;
             case UNSUBSCRIBE:
-                [eventNotif, response] = await this.handleEventUnsubscription(slashCommand, command)
+                response = await this.handleEventUnsubscription(slashCommand, command)
+                eventNotif = null;
                 break;
             case FETCH:
-                [eventNotif, response] = await this.handleFetchCommand(slashCommand, command)
+                response = await this.handleFetchCommand(slashCommand, command)
+                eventNotif = new FetchDataEvent(command.eventId)
+                eventNotif.setCommand(command)
                 break;
             default:
                 break;
-       }
-       eventNotif.setCommand(command)
+       }       
        return [eventNotif, response];
     }
 
@@ -114,7 +117,7 @@ export class SlackCommandService {
     private async handleEventSubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.slackPrismaSvc.fetchSubscription(command, slashCmd.api_app_id)
         if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
-            return [null, failedSubscription("There already exists an active subscription for this event!")]
+            return failedSubscription("There already exists an active subscription for this event!")
         }
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
         let merchantId = 0
@@ -140,13 +143,13 @@ export class SlackCommandService {
                 data: eventSubscription
             })
         }
-        return [null, successfulSubscription(command)]
+        return successfulSubscription(command)
     }
 
     private async handleEventUnsubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.slackPrismaSvc.fetchSubscription(command, slashCmd.api_app_id)
         if(!existing){
-            return [false, failedUnSubscription("No active subscription was found for this event.")]
+            return failedUnSubscription("No active subscription was found for this event.")
         }
         await this.prismaClient.slackEventSubscription.update({
             where: {
@@ -156,12 +159,12 @@ export class SlackCommandService {
                 eventStatus: SlackSubscriptionStatus.DISABLED
             }
         })
-        return [null, successfulUnSubscription(command)]
+        return successfulUnSubscription(command)
     }
 
     private async handleFetchCommand(slashCmd: SlashCommand, command: ICommonCommand){
         //if we have come this far, we must go ahead as well
-        return [new FetchDataEvent(command.eventId), fetchCmdSuccessful(command)]
+        return fetchCmdSuccessful(command)
     }
 
     private prepareSubscription(subscriptionEvent: ICommonCommand, slashCommand: SlashCommand){
