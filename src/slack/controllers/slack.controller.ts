@@ -140,9 +140,6 @@ export class SlackController {
 
   @Get("/event")
   async startEvent(@Req() req){
-    const x = req.helx;
-    console.log("yolanda --> ", req.body.api_app_id);
-    this.slackoauthService.handleUninstall("req.body.api_app_id");
     return "ok"
   }
 }

@@ -8,8 +8,9 @@ export class SEvent {
   eventId: string;
   command: ICommonCommand;
 
-  constructor(eventId: string){
+  constructor(eventId: string, command: ICommonCommand){
     this.eventId = eventId;
+    this.command = command;
   }
 
   // setSlackInstall(slackInstall: SlackInstallation){

@@ -72,8 +72,7 @@ export class SlackCommandService {
                 break;
             case FETCH:
                 response = await this.handleFetchCommand(slashCommand, command)
-                eventNotif = new FetchDataEvent(command.eventId)
-                eventNotif.setCommand(command)
+                eventNotif = new FetchDataEvent(command.eventId, command)
                 break;
             default:
                 break;
