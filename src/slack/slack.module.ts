@@ -9,7 +9,7 @@ import { SlackPrismaService } from './services/prisma.service';
 import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { TestRepository } from './services/test.repository';
-import { SlackController } from './slack.controller';
+import { SlackController } from './controllers/slack.controller';
 
 @Module({
     imports: [MerchantModule, CqrsModule],

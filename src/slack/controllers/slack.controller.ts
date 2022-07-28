@@ -8,33 +8,23 @@ import { Logger } from '@nestjs/common';
 import { NotFoundInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
-import { SlackCommandService } from './services/slack-command.service';
-import { SlackOAuthService } from './services/slack-oauth.service';
-import { SlackInstallationStatus } from './utils/slack.utils';
+import { SlackCommandService } from '../services/slack-command.service';
+import { SlackOAuthService } from '../services/slack-oauth.service';
+import { SlackPrismaService } from '../services/prisma.service';
 
 
-@Controller()
+@Controller("user")
 export class SlackController {
   
   private readonly logger = new Logger(SlackController.name);
-  private prismaClient: PrismaClient
 
   constructor(
     private slackoauthService: SlackOAuthService,
     private slackCmdService: SlackCommandService,
     private merchantService: MerchantService,
+    private prismaSvc: SlackPrismaService,
     private readonly eventBus: EventBus,
-    ) { 
-      this.prismaClient = new PrismaClient({
-        log: [
-            {
-                emit: 'stdout',
-                level: 'query',
-            },
-        ],
-      })
-      // console.log("prisma client --> ", this.prismaClient)
-  }
+    ) { }
 
   @Get("/thanks")
   getHello(): string {
@@ -81,14 +71,7 @@ export class SlackController {
     const activeInstallation = await this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
     await this.slackoauthService.handleOauthRedirect(req, res)    
     if(activeInstallation) {
-      this.prismaClient.slackInstallation.update({
-        where: {
-          id: activeInstallation.id,
-        },
-        data: {
-          installationStatus: SlackInstallationStatus.DEACTIVATED,
-        }
-     })
+      this.prismaSvc.disableInstallation(activeInstallation.id)
     }
   }
 
@@ -98,7 +81,6 @@ export class SlackController {
     if(!merchant.isActive){
       throw new UnauthorizedError("Not authorized")
     }
-    //const activeInstallation = this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
     this.slackoauthService.handleInstall(req, res)
   }
 

@@ -63,4 +63,19 @@ export class SlackPrismaService {
             }
         });
     }
+
+    public async disableInstallation(installId: number): Promise<SlackInstallation>{
+        if(!installId || installId <= 0){
+            throw new Error("Invalid installation id");
+        }
+        return await this.prismaClient.slackInstallation.update({
+            where: {
+                id: installId
+            },
+            data: {
+                installationStatus: SlackInstallationStatus.DEACTIVATED
+            }
+        });
+    }
 }
+
