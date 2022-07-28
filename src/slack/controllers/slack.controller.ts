@@ -1,5 +1,4 @@
 import { Controller, Get, Headers, HttpCode, Post, RawBodyRequest, Req, Res, UseInterceptors } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { isValidSlackRequest, SlashCommand } from '@slack/bolt';
 import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/verify-request';
 import { Request, Response } from 'express';
@@ -89,13 +88,12 @@ export class SlackController {
   async handleEvents(@Headers() headers, @Req() req: RawBodyRequest<Request>, @Res() res: Response) {
     const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     const isReqValid = isValidSlackRequest(slackVerifOptions);
-    this.logger.log("is valid --> ", isReqValid)
     if(!isReqValid){ 
       throw new UnauthorizedError("Not authorized")
     }
     //handle challenge
     if(req.body.challenge){
-      this.logger.log("handling challenge request for events")
+      this.logger.log("handling slack challenge request for events")
       return res.json({"challenge": req.body.challenge})
     }
     if(!req.body.event) {
@@ -103,7 +101,7 @@ export class SlackController {
     }
     const eventType = req.body.event.type || req.body.type;
     let response;
-    this.logger.log("event type is -> ", eventType)
+    this.logger.log("Got request for event type: ", eventType, req.body)
     switch(eventType){
       case "app_uninstalled":
         response = this.slackoauthService.handleUninstall(req.body.api_app_id);
