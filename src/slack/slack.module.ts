@@ -10,10 +10,11 @@ import { SlackCommandService } from './services/slack-command.service';
 import { SlackOAuthService } from './services/slack-oauth.service';
 import { TestRepository } from './services/test.repository';
 import { SlackController } from './controllers/slack.controller';
+import { WebhookController } from './controllers/webhook.controller';
 
 @Module({
     imports: [MerchantModule, CqrsModule],
-    controllers: [SlackController],
+    controllers: [SlackController, WebhookController],
     providers: [
       TestRepository,
       SlackOAuthService, 
