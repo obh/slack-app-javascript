@@ -16,6 +16,8 @@ async function bootstrap() {
     }
   };
 
+  process.env.TZ = 'Asia/Kolkata' 
+
   process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', reason || reason)
     //TODO: send the information to sentry.io    

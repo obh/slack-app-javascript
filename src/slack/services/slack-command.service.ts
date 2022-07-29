@@ -9,6 +9,7 @@ import { failedUnSubscription, successfulUnSubscription } from "../templates/sla
 import { fetchCmdSuccessful } from "../templates/slack-fetch.template";
 import { FetchDataEvent, SEvent } from "../events/interface/fetch-data.event";
 import { SlackPrismaService } from "./prisma.service";
+import { SlackSubscriptionStatus } from "../utils/slack.utils";
 
 const yargs = require('yargs/yargs')
 
@@ -16,11 +17,6 @@ const COMMAND = "/testcommand"
 const SUBSCRIBE = 'subscribe'
 const UNSUBSCRIBE = 'unsubscribe'
 const FETCH = 'fetch'
-
-const enum SlackSubscriptionStatus {
-    ACTIVE = "active",
-    DISABLED = "disabled"
-}
 
 //This is just for the parsing logic which is used by yargs
 const subscribeCmd = {
@@ -115,7 +111,7 @@ export class SlackCommandService {
     //should we check for if slackinstallation already has some other subscription? 
     private async handleEventSubscription(slashCmd: SlashCommand, command: ICommonCommand){
         const existing = await this.slackPrismaSvc.fetchSubscription(command, slashCmd.api_app_id)
-        if(existing && existing.eventStatus == SlackSubscriptionStatus.ACTIVE){
+        if(existing && existing.eventStatus == SlackSubscriptionStatus.SUBSCRIBED){
             return failedSubscription("There already exists an active subscription for this event!")
         }
         const eventSubscription:Prisma.SlackEventSubscriptionCreateInput = this.prepareSubscription(command, slashCmd)
@@ -129,19 +125,13 @@ export class SlackCommandService {
         if(merchantId == 0){
             throw new SlackError("Found error when subscribing to event!")
         }
-        eventSubscription.merchantId = merchantId        
-        if(!existing){
-            await this.prismaClient.slackEventSubscription.create({
-                data: eventSubscription
-            })
-        } else {
-            await this.prismaClient.slackEventSubscription.update({
-                where: {
-                    id: existing.id
-                }, 
-                data: eventSubscription
-            })
-        }
+        eventSubscription.merchantId = merchantId
+        eventSubscription.updatedOn = new Date()
+        await this.prismaClient.slackEventSubscription.upsert({
+            where: {id: existing ? existing.id : 0},
+            update: {...eventSubscription},
+            create: {...eventSubscription}
+        })                
         return successfulSubscription(command)
     }
 
@@ -155,7 +145,8 @@ export class SlackCommandService {
                 id: existing.id
             },
             data: {
-                eventStatus: SlackSubscriptionStatus.DISABLED
+                eventStatus: SlackSubscriptionStatus.UNSUBSCRIBED,
+                updatedOn: new Date()
             }
         })
         return successfulUnSubscription(command)
@@ -177,16 +168,12 @@ export class SlackCommandService {
             userName: slashCommand.user_name,
             command: slashCommand.command,
             event: subscriptionEvent.eventId,
-            eventStatus: SlackSubscriptionStatus.ACTIVE,
+            eventStatus: SlackSubscriptionStatus.SUBSCRIBED,
             text: slashCommand.text,
             triggerId: slashCommand.trigger_id,
+            addedOn: new Date()
         };
         return installation
     }
-
-    public randomMethod(){
-        console.log("RANDOM METHOD CALLED!!")
-    }
-
 
 }
