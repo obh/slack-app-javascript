@@ -10,6 +10,7 @@ import { fetchCmdSuccessful } from "../templates/slack-fetch.template";
 import { FetchDataEvent, SEvent } from "../events/interface/fetch-data.event";
 import { SlackPrismaService } from "./prisma.service";
 import { SlackSubscriptionStatus } from "../utils/slack.utils";
+import { helpTemplate } from "../templates/slack-help.template";
 
 const yargs = require('yargs/yargs')
 
@@ -17,6 +18,7 @@ const COMMAND = "/testcommand"
 const SUBSCRIBE = 'subscribe'
 const UNSUBSCRIBE = 'unsubscribe'
 const FETCH = 'fetch'
+const HELP = 'help'
 
 //This is just for the parsing logic which is used by yargs
 const subscribeCmd = {
@@ -56,7 +58,10 @@ export class SlackCommandService {
     public async handleCommand(slashCommand: SlashCommand): Promise<[SEvent, object]> {
         const [cmd, command] = this.parseAndValidate(slashCommand)
         let response;
-        let eventNotif;
+        let eventNotif = null;
+        if([SUBSCRIBE, UNSUBSCRIBE, FETCH].includes(cmd) && !command){
+            throw new SlackError("Oops! Failed to find a matching event: " + slashCommand.text)
+        }
         switch(cmd){
             case SUBSCRIBE:
                 response = await this.handleEventSubscription(slashCommand, command)
@@ -70,6 +75,10 @@ export class SlackCommandService {
                 response = await this.handleFetchCommand(slashCommand, command)
                 eventNotif = new FetchDataEvent(command.eventId, command)
                 break;
+            case HELP:
+                response = this.handleHelpCommand()
+                eventNotif = null;
+                break;            
             default:
                 break;
        }       
@@ -78,18 +87,20 @@ export class SlackCommandService {
 
     private parseAndValidate(slashCommand: SlashCommand): [string, ICommonCommand] {
         const cmdArgs = yargs(slashCommand.text)
-            .command(subscribeCmd)
-            .command(unsubscribeCmd)
-            .command(fetchCmd)
-            .parse()
-        
-        if(cmdArgs._.length == 0){
+                .exitProcess(false)
+                .command(subscribeCmd)
+                .command(unsubscribeCmd)
+                .command(fetchCmd)              
+                .parse()
+
+        if(cmdArgs._.length == 0 && slashCommand.text != HELP){
             throw new SlackError("Oops! Failed to parse this command: " + slashCommand.text)
         }
-        const cmd = cmdArgs._[0].toLowerCase()
+        const cmd = cmdArgs._.length >= 1 ? cmdArgs._[0].toLowerCase() : HELP
+        console.log("Command: " + cmd, cmdArgs)
         const event = cmdArgs.event
         // check first part
-        let parsedCmd : boolean | ICommonCommand;
+        let parsedCmd : ICommonCommand;
         switch(cmd) {
             case SUBSCRIBE:            
             case UNSUBSCRIBE:
@@ -98,14 +109,14 @@ export class SlackCommandService {
             case FETCH:
                 parsedCmd = parseFetchCommand(event)
                 break
+            case HELP:
+                //do nothing
+                break;
             default: 
                 //log error here
                 throw new SlackError("Oops! Failed to find a matching command: " + cmd)
         }       
-        if(!parsedCmd){
-            throw new SlackError("Oops! Failed to find a matching event: " + event)
-        }
-        return [cmd, parsedCmd as ICommonCommand]
+        return [cmd, parsedCmd]
     }
 
     //should we check for if slackinstallation already has some other subscription? 
@@ -155,6 +166,10 @@ export class SlackCommandService {
     private async handleFetchCommand(slashCmd: SlashCommand, command: ICommonCommand){
         //if we have come this far, we must go ahead as well
         return fetchCmdSuccessful(command)
+    }
+
+    private handleHelpCommand(){
+        return helpTemplate
     }
 
     private prepareSubscription(subscriptionEvent: ICommonCommand, slashCommand: SlashCommand){

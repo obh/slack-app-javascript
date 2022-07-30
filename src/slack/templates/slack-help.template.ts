@@ -1,6 +1,4 @@
-
-export const homeTemplate = {
-    "type": "home",
+export const helpTemplate = {
 	"blocks": [
 		{
 			"type": "section",
@@ -25,4 +23,3 @@ export const homeTemplate = {
 		}
 	]
 }
-

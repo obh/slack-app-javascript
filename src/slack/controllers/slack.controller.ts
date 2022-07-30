@@ -48,7 +48,7 @@ export class SlackController {
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
     const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
     //TODO - throw error slack installation doesn't exist (should never happen)
-    this.logger.log("slash command --> ", slashCommand)
+    console.log("slash command --> ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
       event.command.slackInstallation = slackInstallation
