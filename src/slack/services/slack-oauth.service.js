@@ -1,13 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { AppRunner } from '@seratch_/bolt-http-runner';
 import { App, LogLevel } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
 import { PrismaClient } from '@prisma/client';
 import { PostHomeViewToSlack, PostToSlack, SlackInstallationStatus } from '../utils/slack.utils';
 import { homeTemplate } from '../templates/slack-home.template';
+import { SlackPrismaService } from './prisma.service';
 const { WebClient, LogLevel } = require("@slack/web-api");
 
 const scopes = ['channels:read', 'chat:write', 'commands', 'chat:write.customize']
+
+/*
+ * This is a javascript file because TS throws a compile error when I try to add custom object to installation object
+ */
 
 @Injectable()
 export class SlackOAuthService {
@@ -15,27 +20,22 @@ export class SlackOAuthService {
     appRunner;
     app;
     prismaClient;
+    @Inject(SlackPrismaService)
+    slackPrismaSvc;
+
+    logger = new Logger(SlackOAuthService.name);
 
     constructor(){
-        this.prismaClient = new PrismaClient({
-            log: [
-                {
-                    emit: 'stdout',
-                    level: 'query',
-                },
-            ],
-        });
+        this.prismaClient = new PrismaClient({});
         
         const installationStore = new PrismaInstallationStore({    
             prismaTable: this.prismaClient.slackInstallation,
             historicalDataEnabled: false,
             clientId: process.env.SLACK_CLIENT_ID,
             onStoreInstallation: async ({ prismaInput, installation, idToUpdate }) => {
-                console.log("onStoreInstallation")
+                this.logger.log("OnStoreInstallation::", prismaInput, installation, idToUpdate)
                 prismaInput.merchantId = installation.merchantId
-                prismaInput.installationStatus = installation.installationStatus
-                console.log("---> ", installation);
-                console.log("---> ", prismaInput);
+                prismaInput.installationStatus = installation.installationStatus                
             },
         });
         
@@ -50,9 +50,12 @@ export class SlackOAuthService {
             installerOptions: {
                 directInstall: true,
                 installPathOptions: {
+                    // Before redirection we add our own cookie to the request. 
+                    // This cookie is used to track the installation. 
                     beforeRedirection: async(req, res, options)  => {
-                        const tenantId = req.headers.authorization                        
-                        const authToken = res.setHeader('Set-Cookie', [`token=${tenantId}; Secure; HttpOnly; Path=/; Max-Age=600`])
+                        const authHeader = req.headers.authorization                        
+                        const authToken = res.setHeader('Set-Cookie', 
+                            [`token=${authHeader}; Secure; HttpOnly; Path=/; Max-Age=600`])
                         return true
                     }
                 },
@@ -61,14 +64,14 @@ export class SlackOAuthService {
                     afterInstallation: async (installation, options, req, res) => {
                         installation["merchantId"] = res.getHeader("merchantId")
                         installation["installationStatus"] = SlackInstallationStatus.ACTIVE
-                        console.log("my installation is --> ", installation)
+                        this.logger.log("AfterInstallation:: ", installation)
                         return true
                     },
                     success: (installation, installOptions, req, res) => {
-                        res.redirect('../../success.html')
+                        res.redirect('/slack/user/static/success.html')
                     }, 
                     failure: (error, installOptions , req, res) => {
-                        res.redirect('../../failure.html')
+                        res.redirect('/slack/user/static/failure.html')
                     }
                 },
             },
@@ -86,62 +89,35 @@ export class SlackOAuthService {
     
      async handleOauthRedirect(req, res) {
         await this.appRunner.handleCallback(req, res)
-    }
+    }       
 
-    async getSlackInstallationForMerchant(merchantId){
-        if(!merchantId){
-            return null
-        }
-        const slackInstallation = this.prismaClient.slackInstallation.findFirst({
-            where: {
-                merchantId: merchantId,
-                installationStatus: SlackInstallationStatus.ACTIVE
-            }
-        });
-        return slackInstallation
-    }
-
-    async getSlackInstallationForAppId(slackAppId){
-        if(!slackAppId){
-            return null
-        }
-        console.log("Searching for slack installation where appId: {} and status is ACTIVE", slackAppId)
-        const slackInstallation = this.prismaClient.slackInstallation.findFirst({
-            where: {
-                appId: slackAppId,
-                installationStatus: SlackInstallationStatus.ACTIVE
-            }
-        });
-        return slackInstallation
-    }
-
-    async requestHandler(appId, channel) {
-       try {
-        let slackInstallation = await this.getSlackInstallationForAppId(appId)
-        console.log("slack install --> ", slackInstallation)
-        const client = new WebClient(slackInstallation.botToken, {
-            logLevel: LogLevel.DEBUG
-          });
-        const result = await client.views.publish({
-          user_id: "U03MJ0MD01X",
-          view: {
-            "type": "home",
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*Welcome home, <@{}> :house:* U03MJ0MD01X",
-                    },
-                },
-            ]    
-          }
-        });
-        console.log(result);
-      } catch (error) {
-        console.log(error)
-      }
-    }
+    // async requestHandler(appId, channel) {
+    //    try {
+    //     let slackInstallation = await this.getSlackInstallationForAppId(appId)
+    //     console.log("slack install --> ", slackInstallation)
+    //     const client = new WebClient(slackInstallation.botToken, {
+    //         logLevel: LogLevel.DEBUG
+    //       });
+    //     const result = await client.views.publish({
+    //       user_id: "U03MJ0MD01X",
+    //       view: {
+    //         "type": "home",
+    //         "blocks": [
+    //             {
+    //                 "type": "section",
+    //                 "text": {
+    //                     "type": "mrkdwn",
+    //                     "text": "*Welcome home, <@{}> :house:* U03MJ0MD01X",
+    //                 },
+    //             },
+    //         ]    
+    //       }
+    //     });
+    //     console.log(result);
+    //   } catch (error) {
+    //     console.log(error)
+    //   }
+    // }
 
     async handleUninstall(appId){
         let slackInstallation = await this.getSlackInstallationForAppId(appId)

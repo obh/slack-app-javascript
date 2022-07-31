@@ -44,16 +44,15 @@ export class SlackController {
     // if(!isReqValid){
     //   throw new UnauthorizedError("Not authorized")
     // }
-    this.logger.log("body is --> ", JSON.stringify(req.body))
     const slashCommand:SlashCommand = JSON.parse(JSON.stringify(req.body));
-    const slackInstallation = await this.slackoauthService.getSlackInstallationForAppId(slashCommand.api_app_id)
+    const slackInstallation = await this.prismaSvc.fetchActiveInstallation(slashCommand.api_app_id)
     //TODO - throw error slack installation doesn't exist (should never happen)
-    console.log("slash command --> ", slashCommand)
+    this.logger.log("handleCommand:: Command ", slashCommand)
     const [event, resp] = await this.slackCmdService.handleCommand(slashCommand)
     if(event){
       event.command.slackInstallation = slackInstallation
       event.command.slashCommand = slashCommand
-      console.log("sending event......  ", event)
+      this.logger.log("handleCommand::sending event", event)
       this.eventBus.publish(event);
     }
     return resp
@@ -67,11 +66,11 @@ export class SlackController {
       throw new UnauthorizedError("Not authorized")
     }   
     res.setHeader("merchantId", merchant.merchantId)
-    const activeInstallation = await this.slackoauthService.getSlackInstallationForMerchant(merchant.merchantId)    
+    const activeInstallation = await this.prismaSvc.fetchActiveInstallationforMerchant(merchant.merchantId)    
     await this.slackoauthService.handleOauthRedirect(req, res)    
-    if(activeInstallation) {
-      this.prismaSvc.disableInstallation(activeInstallation.id)
-    }
+    // if(activeInstallation) {
+    //   this.prismaSvc.disableInstallation(activeInstallation.id)
+    // }
   }
 
   @Get("/install")
@@ -101,7 +100,7 @@ export class SlackController {
     }
     const eventType = req.body.event.type || req.body.type;
     let response;
-    this.logger.log("Got request for event type: ", eventType, req.body)
+    this.logger.log("handleEvents:: ", eventType, req.body)
     switch(eventType){
       case "app_uninstalled":
         response = this.slackoauthService.handleUninstall(req.body.api_app_id);
