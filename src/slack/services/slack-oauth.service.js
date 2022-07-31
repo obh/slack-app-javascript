@@ -3,7 +3,7 @@ import { AppRunner } from '@seratch_/bolt-http-runner';
 import { App, LogLevel } from '@slack/bolt';
 import { PrismaInstallationStore } from "slack-bolt-prisma";
 import { PrismaClient } from '@prisma/client';
-import { PostHomeViewToSlack, PostToSlack, SlackInstallationStatus } from '../utils/slack.utils';
+import { PostHomeViewToSlack, SlackInstallationStatus } from '../utils/slack.utils';
 import { homeTemplate } from '../templates/slack-home.template';
 import { SlackPrismaService } from './prisma.service';
 const { WebClient, LogLevel } = require("@slack/web-api");
@@ -91,47 +91,12 @@ export class SlackOAuthService {
         await this.appRunner.handleCallback(req, res)
     }       
 
-    // async requestHandler(appId, channel) {
-    //    try {
-    //     let slackInstallation = await this.getSlackInstallationForAppId(appId)
-    //     console.log("slack install --> ", slackInstallation)
-    //     const client = new WebClient(slackInstallation.botToken, {
-    //         logLevel: LogLevel.DEBUG
-    //       });
-    //     const result = await client.views.publish({
-    //       user_id: "U03MJ0MD01X",
-    //       view: {
-    //         "type": "home",
-    //         "blocks": [
-    //             {
-    //                 "type": "section",
-    //                 "text": {
-    //                     "type": "mrkdwn",
-    //                     "text": "*Welcome home, <@{}> :house:* U03MJ0MD01X",
-    //                 },
-    //             },
-    //         ]    
-    //       }
-    //     });
-    //     console.log(result);
-    //   } catch (error) {
-    //     console.log(error)
-    //   }
-    // }
-
     async handleUninstall(appId){
-        let slackInstallation = await this.getSlackInstallationForAppId(appId)
-        console.log("slack installation found --> ", slackInstallation)
+        let slackInstallation = await this.slackPrismaSvc.fetchActiveInstallation(appId)
+        this.logger.log("handleUninstall:: Uninstall ", slackInstallation)
         if(slackInstallation && slackInstallation.installationStatus == SlackInstallationStatus.ACTIVE){
-            const updatedInstallation = await this.prismaClient.slackInstallation.update({
-                where: {
-                    id: slackInstallation.id
-                },
-                data: {
-                    installationStatus: SlackInstallationStatus.DEACTIVATED
-                }
-            })
-            console.log("Slack app uninstalled: {}", updatedInstallation.appId)
+            const updatedInstallation = await this.slackPrismaSvc.disableInstallation(slackInstallation.id)           
+            this.logger.log("handleUninstall:: Uninstalled ", updatedInstallation.appId)
         }    
         return {"status": "success"}
     }
