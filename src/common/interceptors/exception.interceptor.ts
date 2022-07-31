@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor} from "@nestjs/common";
 import { catchError, Observable, of, throwError } from "rxjs";
 
 export class EntityNotFoundError extends Error {}
@@ -11,12 +11,16 @@ export class CommandNotFoundError extends Error {}
 export class SlackError extends Error{}
 
 @Injectable()
-export class NotFoundInterceptor implements NestInterceptor {
+export class ErrorInterceptor implements NestInterceptor {
+
+  private readonly logger = new Logger(ErrorInterceptor.name);
+
   intercept(context: ExecutionContext, next: CallHandler): any {
-    // next.handle() is an Observable of the controller's result value
+    
+
     return next.handle()
       .pipe(catchError(error => {
-        console.log("error is here --> ", error)
+        this.logger.log("ErrorInterceptor::", error)
         if(error instanceof SlackError){
           return of(error.message)
         } else {

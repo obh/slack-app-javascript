@@ -7,7 +7,7 @@ const SUBSCRIPTION_SUCCESS_TEMPLATE = {
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":white_check_mark: You hav successfully subscribed! "
+				"text": ":white_check_mark: You have successfully subscribed! "
 			}
 		},
         {

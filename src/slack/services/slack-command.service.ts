@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { SlashCommand } from "@slack/bolt";
 import { SlackError } from "src/common/interceptors/exception.interceptor";
@@ -40,19 +40,13 @@ const fetchCmd = {
 export class SlackCommandService {
     
     private prismaClient: PrismaClient;
+    private readonly logger = new Logger(SlackCommandService.name);
     
     @Inject(SlackPrismaService)
     private slackPrismaSvc: SlackPrismaService;
     
     constructor(){        
-        this.prismaClient = new PrismaClient({
-            log: [
-                {
-                    emit: 'stdout',
-                    level: 'query',
-                },
-            ],
-        });
+        this.prismaClient = new PrismaClient({});
     }
 
     public async handleCommand(slashCommand: SlashCommand): Promise<[SEvent, object]> {
@@ -92,12 +86,13 @@ export class SlackCommandService {
                 .command(unsubscribeCmd)
                 .command(fetchCmd)              
                 .parse()
-
+        
+        this.logger.log("Command Received:: " , cmdArgs)
         if(cmdArgs._.length == 0 && slashCommand.text != HELP){
             throw new SlackError("Oops! Failed to parse this command: " + slashCommand.text)
         }
         const cmd = cmdArgs._.length >= 1 ? cmdArgs._[0].toLowerCase() : HELP
-        console.log("Command: " + cmd, cmdArgs)
+        
         const event = cmdArgs.event
         // check first part
         let parsedCmd : ICommonCommand;

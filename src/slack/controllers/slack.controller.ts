@@ -4,7 +4,7 @@ import { SlackRequestVerificationOptions } from '@slack/bolt/dist/receivers/veri
 import { Request, Response } from 'express';
 import { EventBus } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { NotFoundInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
+import { ErrorInterceptor, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
 import { Merchant } from 'src/merchant/interfaces/merchant.interface';
 import { MerchantService } from 'src/merchant/merchant.service';
 import { SlackCommandService } from '../services/slack-command.service';
@@ -37,7 +37,7 @@ export class SlackController {
 
   @Post("/command")
   @HttpCode(200)
-  @UseInterceptors(NotFoundInterceptor)
+  @UseInterceptors(ErrorInterceptor)
   async handleCommand(@Headers() headers, @Req() req: RawBodyRequest<Request>) {
     // const slackVerifOptions = this.constructSlackVerificatonReq(req.rawBody.toString(), headers)
     // const isReqValid = isValidSlackRequest(slackVerifOptions);
