@@ -3,6 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import { AllExceptionsFilter } from './slack/slack.exceptions';
+import axios from 'axios';
+
+axios.defaults.timeout === 30000;
+
 const bodyParser = require("body-parser");
 
 async function bootstrap() {

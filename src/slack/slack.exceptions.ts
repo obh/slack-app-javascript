@@ -1,28 +1,35 @@
 import {
-    ExceptionFilter,
-    Catch,
-    ArgumentsHost,
-    HttpException,
-    HttpStatus,
-  } from '@nestjs/common';
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { SlackError, UnauthorizedError } from 'src/common/interceptors/exception.interceptor';
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
   
-  @Catch()
-  export class AllExceptionsFilter implements ExceptionFilter {
-    catch(exception: unknown, host: ArgumentsHost) {
-      console.log("caught exception here ---", exception)
-      const ctx = host.switchToHttp();
-      const response = ctx.getResponse();
-      const request = ctx.getRequest();
-  
-      const status =
-        exception instanceof HttpException
-          ? exception.getStatus()
-          : HttpStatus.INTERNAL_SERVER_ERROR;
-  
-      response.status(status).json({
-        statusCode: status,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      });
-    }
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost) {
+    this.logger.log("catchException::", exception)
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+    const request = ctx.getRequest();
+    
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    if(exception instanceof UnauthorizedError){
+      status = HttpStatus.UNAUTHORIZED;
+    } else if(exception instanceof SlackError){
+      status = HttpStatus.BAD_REQUEST;
+    }        
+    
+    response.status(status).json({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+    });
   }
+}

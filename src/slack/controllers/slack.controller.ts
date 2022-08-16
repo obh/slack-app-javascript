@@ -56,7 +56,7 @@ export class SlackController {
   @Get("/oauth_redirect")
   async oauthRedirect(@Req() req: Request, @Res() res: Response) {    
     const merchantToken = this.extractCookieValue(req, "token")
-    const merchant: Merchant = this.merchantService.validateMerchant(merchantToken); 
+    const merchant: Merchant = await this.merchantService.validateMerchant(merchantToken); 
     if(!merchant.isActive){
       throw new UnauthorizedError("Not authorized")
     }   
@@ -71,6 +71,7 @@ export class SlackController {
   @Get("/install")
   async install(@Req() req: Request, @Res() res: Response){        
     const merchant = await this.merchantService.validateMerchant(req.headers.authorization);
+    console.log("Merchant is --> ", merchant)
     if(!merchant.isActive){
       throw new UnauthorizedError("Not authorized")
     }

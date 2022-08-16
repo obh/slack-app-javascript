@@ -23,6 +23,8 @@ export class ErrorInterceptor implements NestInterceptor {
         this.logger.log("ErrorInterceptor::", error)
         if(error instanceof SlackError){
           return of(error.message)
+        } else if (error instanceof UnauthorizedError){
+          return of(error.message)
         } else {
           throwError(() => new Error(error))
         }
