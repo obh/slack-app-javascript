@@ -1,0 +1,4 @@
+port: 3000
+env: "devo"
+merchantSvcHost: "https://gamma.cashfree.com"
+version: "1.0.0"

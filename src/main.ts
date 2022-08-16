@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config'; 
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
 import { AllExceptionsFilter } from './slack/slack.exceptions';
@@ -17,6 +18,7 @@ async function bootstrap() {
   };
 
   process.env.TZ = 'Asia/Kolkata' 
+  const configService = app.get(ConfigService);  
 
   process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', reason || reason)
@@ -30,7 +32,7 @@ async function bootstrap() {
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.useLogger(app.get(Logger));
   app.useGlobalFilters(new AllExceptionsFilter)
-  await app.listen(3000);
+  await app.listen(configService.get("port"));
 }
 
 

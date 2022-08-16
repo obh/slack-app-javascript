@@ -1,9 +1,10 @@
 import { MiddlewareConsumer, Module,  NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MerchantService } from './merchant.service';
 
 
 @Module({
-    imports: [ ],
+    imports: [ ConfigModule ],
     controllers: [],
     providers: [MerchantService],
     exports: [MerchantService]

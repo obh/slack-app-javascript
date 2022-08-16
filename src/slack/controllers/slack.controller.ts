@@ -30,11 +30,6 @@ export class SlackController {
     return "hello world"
   }
 
-  @Get("/end")
-  getEnd(): string {
-    return "this is the end!"
-  }
-
   @Post("/command")
   @HttpCode(200)
   @UseInterceptors(ErrorInterceptor)
